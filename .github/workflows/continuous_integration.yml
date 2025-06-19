@@ -1,0 +1,45 @@
+name: Continuous Integration
+
+on:
+  pull_request:
+    branches: [main]
+
+  workflow_dispatch:
+
+# Supported platforms / Ruby versions:
+#  - Ubuntu: MRI (3.1, 3.2, 3.3, 3.4), TruffleRuby (24), JRuby (9.4)
+#  - Windows: MRI (3.1)
+
+jobs:
+  build:
+    name: Ruby ${{ matrix.ruby }} on ${{ matrix.operating-system }}
+
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' && !startsWith(github.event.pull_request.head.ref, 'release-please--'))
+
+    runs-on: ${{ matrix.operating-system }}
+    continue-on-error: true
+
+    env:
+      FAIL_ON_LOW_COVERAGE: ${{ matrix.fail_on_low_coverage }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: ["3.1", "3.4"]
+        operating-system: [ubuntu-latest]
+        fail_on_low_coverage: [true]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Initialize Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+
+      - name: Run rake
+        run: bundle exec rake
