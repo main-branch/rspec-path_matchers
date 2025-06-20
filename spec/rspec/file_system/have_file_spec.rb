@@ -633,10 +633,6 @@ RSpec.describe 'the have_file matcher' do
       allow(File).to receive(:stat).with(path).and_return(double(atime: actual_atime))
     end
 
-    context 'when the atime option is not supported' do
-      it 'should give a warning and not check the atime'
-    end
-
     context 'when the expected atime is not valid' do
       let(:expected_atime) { 'invalid' }
 
@@ -841,10 +837,6 @@ RSpec.describe 'the have_file matcher' do
       allow(File).to receive(:stat).with(path).and_return(double(ctime: actual_ctime))
     end
 
-    context 'when the ctime option is not supported' do
-      it 'should give a warning and not check the ctime'
-    end
-
     context 'when the expected ctime is not valid' do
       let(:expected_ctime) { 'invalid' }
 
@@ -938,10 +930,6 @@ RSpec.describe 'the have_file matcher' do
 
     def mock_mtime(path, actual_mtime)
       allow(File).to receive(:stat).with(path).and_return(double(mtime: actual_mtime))
-    end
-
-    context 'when the mtime option is not supported' do
-      it 'should give a warning and not check the mtime'
     end
 
     context 'when given an invalid mtime value' do

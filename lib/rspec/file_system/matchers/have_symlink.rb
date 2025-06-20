@@ -12,9 +12,10 @@ module RSpec
           RSpec::FileSystem::Options::SymlinkBirthtime,
           RSpec::FileSystem::Options::SymlinkCtime,
           RSpec::FileSystem::Options::SymlinkGroup,
-          # RSpec::FileSystem::Options::SymlinkMode,
           RSpec::FileSystem::Options::SymlinkMtime,
-          RSpec::FileSystem::Options::SymlinkOwner
+          RSpec::FileSystem::Options::SymlinkOwner,
+          RSpec::FileSystem::Options::SymlinkTarget,
+          RSpec::FileSystem::Options::SymlinkTargetType
         ].freeze
 
         def option_definitions = OPTIONS

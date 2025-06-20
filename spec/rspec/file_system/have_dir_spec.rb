@@ -369,10 +369,6 @@ RSpec.describe 'the have_dir matcher' do
       allow(File).to receive(:stat).with(path).and_return(double(atime: actual_atime))
     end
 
-    context 'when the atime option is not supported' do
-      it 'should give a warning and not check the atime'
-    end
-
     context 'when the expected atime is not valid' do
       let(:expected_atime) { 'invalid' }
 
@@ -468,8 +464,18 @@ RSpec.describe 'the have_dir matcher' do
       allow(File).to receive(:stat).with(path).and_return(double(birthtime: actual_birthtime))
     end
 
-    context 'when the birthtime option is not supported' do
-      it 'should give a warning and not check the birthtime'
+    context 'for a path that does not support birthtime' do
+      let(:expected_birthtime) { now }
+
+      before do
+        allow_any_instance_of(File::Stat).to receive(:birthtime).and_raise(NotImplementedError)
+      end
+
+      it 'should give a warning and skip the birthtime check' do
+        expected_message = "WARNING: birthtime expectations are not supported for #{path} and will be skipped"
+        expect(RSpec.configuration.reporter).to receive(:message).with(expected_message)
+        expect { subject }.not_to raise_error
+      end
     end
 
     context 'when the expected birthtime is not valid' do
@@ -567,10 +573,6 @@ RSpec.describe 'the have_dir matcher' do
       allow(File).to receive(:stat).with(path).and_return(double(ctime: actual_ctime))
     end
 
-    context 'when the ctime option is not supported' do
-      it 'should give a warning and not check the ctime'
-    end
-
     context 'when the expected ctime is not valid' do
       let(:expected_ctime) { 'invalid' }
 
@@ -664,10 +666,6 @@ RSpec.describe 'the have_dir matcher' do
 
     def mock_mtime(path, actual_mtime)
       allow(File).to receive(:stat).with(path).and_return(double(mtime: actual_mtime))
-    end
-
-    context 'when the mtime option is not supported' do
-      it 'should give a warning and not check the mtime'
     end
 
     context 'when given an invalid mtime value' do
