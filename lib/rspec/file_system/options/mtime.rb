@@ -24,7 +24,7 @@ module RSpec
           actual = File.stat(path).mtime
           case expected
           when Time, DateTime then match_time(actual, expected, failure_messages)
-          else match_matcher(actual, expected, failure_messages)
+          else                     match_matcher(actual, expected, failure_messages)
           end
         end
 

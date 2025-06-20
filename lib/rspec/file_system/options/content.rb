@@ -26,8 +26,7 @@ module RSpec
           case expected
           when String then match_string(actual, expected, failure_messages)
           when Regexp then match_regexp(actual, expected, failure_messages)
-          else
-            match_matcher(actual, expected, failure_messages)
+          else             match_matcher(actual, expected, failure_messages)
           end
         end
 

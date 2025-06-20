@@ -24,7 +24,7 @@ module RSpec
           actual = File.size(path)
           case expected
           when Integer then match_integer(actual, expected, failure_messages)
-          else match_matcher(actual, expected, failure_messages)
+          else              match_matcher(actual, expected, failure_messages)
           end
         end
 

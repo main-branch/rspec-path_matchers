@@ -732,8 +732,18 @@ RSpec.describe 'the have_file matcher' do
       allow(File).to receive(:stat).with(path).and_return(double(birthtime: actual_birthtime))
     end
 
-    context 'when the birthtime option is not supported' do
-      it 'should give a warning and not check the birthtime'
+    context 'for a path that does not support birthtime' do
+      let(:expected_birthtime) { now }
+
+      before do
+        allow_any_instance_of(File::Stat).to receive(:birthtime).and_raise(NotImplementedError)
+      end
+
+      it 'should give a warning and skip the birthtime check' do
+        expected_message = "WARNING: birthtime expectations are not supported for #{path} and will be skipped"
+        expect(RSpec.configuration.reporter).to receive(:message).with(expected_message)
+        expect { subject }.not_to raise_error
+      end
     end
 
     context 'when the expected birthtime is not valid' do

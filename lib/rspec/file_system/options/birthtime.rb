@@ -18,13 +18,22 @@ module RSpec
 
         # Returns nil if the expected birthtime matches the actual birthtime
         # @param path [String] the path of the entry to check
-        # @return [String, nil]
+        # @param expected [Object] the expected value to match against the actual value
+        # @param failure_messages [Array<String>] the array to append failure messages to
+        # @return [Void]
         #
         def self.match(path, expected, failure_messages)
-          actual = File.stat(path).birthtime
+          begin
+            actual = File.stat(path).birthtime
+          rescue NotImplementedError
+            message = "WARNING: #{key} expectations are not supported for #{path} and will be skipped"
+            RSpec.configuration.reporter.message(message)
+            return
+          end
+
           case expected
           when Time, DateTime then match_time(actual, expected, failure_messages)
-          else match_matcher(actual, expected, failure_messages)
+          else                     match_matcher(actual, expected, failure_messages)
           end
         end
 

@@ -85,8 +85,6 @@ RSpec.describe 'the have_symlink matcher' do
   describe 'the owner: option' do
     subject { expect(tmpdir).to have_symlink(expected_name, owner: expected_owner) }
 
-    let(:path) { File.join(tmpdir, expected_name) }
-
     def mock_owner(path, actual_owner)
       uid = 9999
       allow(File).to receive(:lstat).with(path).and_return(double(uid: uid))
@@ -173,8 +171,6 @@ RSpec.describe 'the have_symlink matcher' do
   describe 'the group: option' do
     subject { expect(tmpdir).to have_symlink(expected_name, group: expected_group) }
 
-    let(:path) { File.join(tmpdir, expected_name) }
-
     # Etc.getgrgid(File.stat(path).gid).name
     def mock_group(path, name)
       gid = 9999
@@ -259,8 +255,6 @@ RSpec.describe 'the have_symlink matcher' do
 
   describe 'the atime: option' do
     subject { expect(tmpdir).to have_symlink(expected_name, atime: expected_atime) }
-
-    let(:path) { File.join(tmpdir, expected_name) }
 
     def mock_atime(path, actual_atime)
       allow(File).to receive(:lstat).with(path).and_return(double(atime: actual_atime))
@@ -359,10 +353,22 @@ RSpec.describe 'the have_symlink matcher' do
   describe 'the birthtime: option' do
     subject { expect(tmpdir).to have_symlink(expected_name, birthtime: expected_birthtime) }
 
-    let(:path) { File.join(tmpdir, expected_name) }
-
     def mock_birthtime(path, actual_birthtime)
       allow(File).to receive(:lstat).with(path).and_return(double(birthtime: actual_birthtime))
+    end
+
+    context 'for a path that does not support birthtime' do
+      let(:expected_birthtime) { now }
+
+      before do
+        allow_any_instance_of(File::Stat).to receive(:birthtime).and_raise(NotImplementedError)
+      end
+
+      it 'should give a warning and skip the birthtime check' do
+        expected_message = "WARNING: birthtime expectations are not supported for #{path} and will be skipped"
+        expect(RSpec.configuration.reporter).to receive(:message).with(expected_message)
+        expect { subject }.not_to raise_error
+      end
     end
 
     context 'when the birthtime option is not supported' do
@@ -457,8 +463,6 @@ RSpec.describe 'the have_symlink matcher' do
 
   describe 'the ctime: option' do
     subject { expect(tmpdir).to have_symlink(expected_name, ctime: expected_ctime) }
-
-    let(:path) { File.join(tmpdir, expected_name) }
 
     def mock_ctime(path, actual_ctime)
       allow(File).to receive(:lstat).with(path).and_return(double(ctime: actual_ctime))
@@ -556,8 +560,6 @@ RSpec.describe 'the have_symlink matcher' do
 
   describe 'the mtime: option' do
     subject { expect(tmpdir).to have_symlink(expected_name, mtime: expected_mtime) }
-
-    let(:path) { File.join(tmpdir, expected_name) }
 
     def mock_mtime(path, actual_mtime)
       allow(File).to receive(:lstat).with(path).and_return(double(mtime: actual_mtime))

@@ -24,7 +24,7 @@ module RSpec
           actual = File.stat(path).mode.to_s(8)[-4..] # Get the last 4 characters of the octal mode
           case expected
           when String then match_string(actual, expected, failure_messages)
-          else match_matcher(actual, expected, failure_messages)
+          else             match_matcher(actual, expected, failure_messages)
           end
         end
 
