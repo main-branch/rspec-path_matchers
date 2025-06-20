@@ -15,6 +15,7 @@ module RSpec
           RSpec::FileSystem::Options::SymlinkMtime,
           RSpec::FileSystem::Options::SymlinkOwner,
           RSpec::FileSystem::Options::SymlinkTarget,
+          RSpec::FileSystem::Options::SymlinkTargetExist,
           RSpec::FileSystem::Options::SymlinkTargetType
         ].freeze
 

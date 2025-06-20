@@ -72,5 +72,5 @@ expect(path).to have_symlink(name, ctime: timestamp_matcher) # ...the symlink cr
 expect(path).to have_symlink(name, mtime: timestamp_matcher) # ...the symlink modification time as a Time
 
 expect(path).to have_symlink(name, target: target_matcher) # ...the symlink target as a String
-expect(path).to have_symlink(name, target_type: target_type) # :directory, :file, :symlink, :socket, :pipe, :character_device, :block_device
-expect(path).to have_symlink(name, dangling: boolean) # Assert whether the symlink is dangling or not
+expect(path).to have_symlink(name, target_type: target_type)
+expect(path).to have_symlink(name, target_exist?: boolean) # Assert whether the symlink is dangling or not

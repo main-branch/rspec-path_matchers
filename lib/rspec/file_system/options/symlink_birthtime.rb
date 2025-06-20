@@ -22,7 +22,7 @@ module RSpec
         # @param failure_messages [Array<String>] the array to append failure messages to
         # @return [Void]
         #
-        def self.match(path, expected, failure_messages)
+        def self.match(path, expected, failure_messages) # rubocop:disable Metrics/MethodLength
           begin
             actual = File.lstat(path).birthtime
           rescue NotImplementedError
