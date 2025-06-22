@@ -19,7 +19,7 @@ expect(path).to have_symlink(
 expect(path).to have_file(name)
 
 # Content checks
-expect(path).to have_file(name, content: matcher | String | Regexp) # Matcher is compared to the file content as a String
+expect(path).to have_file(name, content: matcher | String | Regexp) # Matcher is compared to file content as a String
 expect(path).to have_file(name, json_content: matcher | true) # ...the parsed file content as a Hash/Array/Object
 expect(path).to have_file(name, yaml_content: matcher | true) # ...the parsed file content as a Hash/Array/Object
 expect(path).to have_file(name, size: matcher) # ...the file size as an Integer
@@ -65,7 +65,7 @@ expect(path).to(
 expect(path).to have_symlink(name)
 
 # Attribute checks
-expect(path).to have_symlink(name, mode: mode_matcher) # Matcher is compared to the symlink mode as a String (e.g. '0777')
+expect(path).to have_symlink(name, mode: mode_matcher) # Matcher is compared to symlink mode as a String (e.g. '0777')
 expect(path).to have_symlink(name, owner: owner_matcher) # ...the symlink owner as a String
 expect(path).to have_symlink(name, group: group_matcher) # ...the symlink group as a String
 expect(path).to have_symlink(name, ctime: timestamp_matcher) # ...the symlink creation time as a Time
