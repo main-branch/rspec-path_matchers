@@ -21,8 +21,8 @@ def have_file(name, **options_hash) # rubocop:disable Naming/PredicatePrefix
   RSpec::FileSystem::Matchers::HaveFile.new(name, **options_hash)
 end
 
-def have_dir(name, **options_hash) # rubocop:disable Naming/PredicatePrefix
-  RSpec::FileSystem::Matchers::HaveDirectory.new(name, **options_hash)
+def have_dir(name, **options_hash, &) # rubocop:disable Naming/PredicatePrefix
+  RSpec::FileSystem::Matchers::HaveDirectory.new(name, **options_hash, &)
 end
 
 def have_symlink(name, **options_hash) # rubocop:disable Naming/PredicatePrefix

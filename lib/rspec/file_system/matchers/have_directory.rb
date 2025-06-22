@@ -1,11 +1,13 @@
 # frozen_string_literal: true
 
 require_relative 'base'
+require_relative 'directory_contents_inspector'
 
 module RSpec
   module FileSystem
     module Matchers
-      # An RSpec matcher checks for the existence and properties of a file
+      # An RSpec matcher checks for the existence and properties of a directory
+      #
       class HaveDirectory < Base
         OPTIONS = [
           RSpec::FileSystem::Options::Atime,
@@ -17,9 +19,40 @@ module RSpec
           RSpec::FileSystem::Options::Owner
         ].freeze
 
+        attr_reader :nested_matchers
+
+        def initialize(name, **options_hash, &block)
+          super(name, **options_hash)
+          @nested_matchers = []
+          return unless block
+
+          inspector = DirectoryContentsInspector.new
+          inspector.instance_eval(&block)
+          @nested_matchers = inspector.nested_matchers
+        end
+
+        # Overrides Base to add recursive validation for nested matchers
+        def collect_validation_errors(errors)
+          super # Validate this directory's own options first.
+          nested_matchers.each do |matcher|
+            matcher.collect_validation_errors(errors)
+          end
+        end
+
         def option_definitions = OPTIONS
 
         protected
+
+        # Overrides Base to add recursive execution for nested matchers
+        def validate_options
+          super # Validate this directory's own options first.
+
+          # Execute the nested matchers against this directory's path
+          nested_matchers.each do |matcher|
+            # If a nested matcher fails, append its detailed failure message
+            failure_messages << matcher.failure_message unless matcher.execute_match(path)
+          end
+        end
 
         def validate_existance(failure_messages)
           return nil if File.directory?(path)

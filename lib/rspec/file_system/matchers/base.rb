@@ -13,9 +13,68 @@ module RSpec
 
         attr_reader :name, :options, :base_path, :path
 
-        # This helper method acts as a factory for our options classes.
-        # It defines a Data class with the given members and injects our
-        # custom initializer to handle default values.
+        def failure_messages
+          @failure_messages ||= []
+        end
+
+        def matches?(base_path)
+          # It is important to reset failure_messages in case this matcher instance
+          # is reused
+          @failure_messages = []
+
+          # Phase 1: Validate all options recursively for syntax errors
+          validation_errors = []
+          collect_validation_errors(validation_errors)
+          raise ArgumentError, validation_errors.join(', ') if validation_errors.any?
+
+          # Phase 2: Execute the actual match logic
+          execute_match(base_path)
+        end
+
+        # Recursively gathers all syntax/validation errors
+        #
+        # Subclasses (like HaveDirectory) may extend this to recurse into nested
+        # matchers.
+        #
+        # @param errors [Array<String>] An array to append validation error messages to.
+        #
+        # @return [void]
+        #
+        # @api private
+        #
+        def collect_validation_errors(errors)
+          validate_option_values(errors)
+        end
+
+        def failure_message
+          header = "the entry '#{name}' at '#{base_path}' was expected to satisfy the following but did not:"
+          messages = failure_messages.map { |msg| "  - #{msg.gsub(/^/, '  ')}" }.join("\n")
+          "#{header}\n#{messages.sub('  ', '')}"
+        end
+
+        protected
+
+        # Performs the actual matching against the file system
+        #
+        # This method assumes that collect_validation_errors has already been called
+        # and passed. This method is protected so that container matchers (like
+        # HaveDirectory) can call it on nested matchers without using .send.
+        #
+        def execute_match(base_path) # rubocop:disable Naming/PredicateMethod
+          @base_path = base_path.to_s
+          @path = File.join(base_path, name)
+
+          # Validate existence and type.
+          validate_existance(failure_messages)
+          return false if failure_messages.any?
+
+          # Validate specific options and nested expectations.
+          validate_options
+          failure_messages.empty?
+        end
+
+        private
+
         def options_factory(*members, **options_hash)
           Data.define(*members) do
             def initialize(**kwargs)
@@ -35,76 +94,23 @@ module RSpec
           option_definitions.map(&:key)
         end
 
-        def failure_messages
-          @failure_messages ||= []
-        end
-
-        def matches?(base_path)
-          @base_path = base_path.to_s
-          @path = File.join(base_path, name)
-
-          validate_option_values
-          raise ArgumentError, failure_messages.join(', ') if failure_messages.any?
-
-          validate_existance(failure_messages)
-          return false if failure_messages.any?
-
-          validate_options
-          failure_messages.empty?
-        end
-
-        def failure_message
-          "the file '#{name}' did not satisfy its expectations:\n" +
-            failure_messages.join("\n")
-        end
-
-        private
-
         # Ensure the user provided option-values are of the expected type and format
-        #
-        # Populates the `failure_messages` array with the errors found.
-        #
-        # @return [Void]
-        #
-        # @api private
-        #
-        def validate_option_values
+        def validate_option_values(errors)
           options.members.filter_map do |key|
             expected = options.send(key)
-
             next if expected == RSpec::FileSystem::Options::NOT_GIVEN
 
-            option_definition(key).validate_expected(expected, failure_messages)
+            option_definition(key).validate_expected(expected, errors)
           end
         end
 
-        # Ensure the entry at `path` exists and is of the expected type
-        #
-        # Populates the `failure_messages` array with the errors found.
-        #
-        # There are typically two error cases:
-        #
-        # 1. The entry does not exist at all
-        # 2. The entry exists, but is not of the expected type (e.g., a file when a directory was expected)
-        #
-        # @return [Void]
-        #
-        # @abstract Subclass and override this method to implement specific validation logic.
-        #
-        # @api private
-        #
-        def validate_existance(failure_messages)
+        def validate_existance(_failure_messages)
           raise NotImplementedError, 'This method should be implemented in a subclass'
         end
 
-        # Ensure the entry at `path` matches the expectations defined in `options`
+        # Validate the options for the current matcher
         #
-        # Populates the `failure_messages` array with the errors found.
-        #
-        # @return [Void]
-        #
-        # @api private
-        #
+        # Subclasses will override this to add nested execution.
         def validate_options
           options.members.each do |key|
             expected = options.send(key)

@@ -753,5 +753,177 @@ RSpec.describe 'the have_dir matcher' do
         end
       end
     end
+
+    context 'when given a block' do
+      context 'with an empty block' do
+        subject do
+          expect(tmpdir).to(
+            have_dir(expected_name) do # rubocop:disable Lint/EmptyBlock
+              # No expectations in the block
+            end
+          )
+        end
+
+        it 'should not fail' do
+          expect { subject }.not_to raise_error
+        end
+      end
+
+      context 'with a block checking for a file' do
+        let(:subject) do
+          expect(tmpdir).to(
+            have_dir(expected_name) do
+              file('file.json', json_content: true)
+            end
+          )
+        end
+
+        context 'when the block expectations are met' do
+          before do
+            File.write(File.join(path, 'file.json'), '{"key": "value"}')
+          end
+
+          it 'should not fail' do
+            expect { subject }.not_to raise_error
+          end
+        end
+
+        context 'when the block expectations are not met' do
+          before do
+            File.write(File.join(path, 'file.json'), 'not a json file')
+          end
+
+          it 'should fail' do
+            expected_message = /expected valid JSON content, but got error: /
+            expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          end
+        end
+      end
+
+      context 'with a block checking for a directory' do
+        let(:subject) do
+          expect(tmpdir).to(
+            have_dir(expected_name) do
+              dir('nested_dir')
+            end
+          )
+        end
+
+        context 'when the block expectations are met' do
+          before do
+            nested_path = File.join(path, 'nested_dir')
+            Dir.mkdir(nested_path)
+          end
+
+          it 'should not fail' do
+            expect { subject }.not_to raise_error
+          end
+        end
+
+        context 'when the block expectations are not met' do
+          it 'should fail' do
+            expected_message = /expected it to exist/
+            expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          end
+        end
+      end
+
+      context 'with a block checking for a symlink' do
+        let(:subject) do
+          expect(tmpdir).to(
+            have_dir(expected_name) do
+              symlink('nested_symlink', target: 'expected_target')
+            end
+          )
+        end
+
+        context 'when the block expectations are met' do
+          before do
+            File.symlink('expected_target', File.join(path, 'nested_symlink'))
+          end
+
+          it 'should not fail' do
+            expect { subject }.not_to raise_error
+          end
+        end
+
+        context 'when the block expectations are not met' do
+          it 'should fail' do
+            expected_message = /expected it to exist/
+            expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          end
+        end
+      end
+
+      context 'with a block checking for multiple files' do
+        let(:subject) do
+          expect(tmpdir).to(
+            have_dir(expected_name) do
+              file('file1.txt', content: 'content1')
+              file('file2.txt', content: 'content2')
+            end
+          )
+        end
+
+        context 'when the block expectations are met' do
+          before do
+            File.write(File.join(path, 'file1.txt'), 'content1')
+            File.write(File.join(path, 'file2.txt'), 'content2')
+          end
+
+          it 'should not fail' do
+            expect { subject }.not_to raise_error
+          end
+        end
+
+        context 'when the block expectations are not met' do
+          before do
+            File.write(File.join(path, 'file1.txt'), 'wrong content')
+          end
+
+          it 'should fail' do
+            expected_message = /expected it to exist/
+            expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          end
+        end
+      end
+
+      context 'with a block checking for a directory with another block' do
+        let(:subject) do
+          expect(tmpdir).to(
+            have_dir(expected_name) do
+              dir('nested_dir') do
+                file('deeply_nested_file.txt', content: 'content')
+              end
+            end
+          )
+        end
+
+        context 'when the block expectations are met' do
+          before do
+            nested_path = File.join(path, 'nested_dir')
+            Dir.mkdir(nested_path)
+            File.write(File.join(nested_path, 'deeply_nested_file.txt'), 'content')
+          end
+
+          it 'should not fail' do
+            expect { subject }.not_to raise_error
+          end
+        end
+
+        context 'when the block expectations are not met' do
+          before do
+            nested_path = File.join(path, 'nested_dir')
+            Dir.mkdir(nested_path)
+            File.write(File.join(nested_path, 'deeply_nested_file.txt'), 'unexpected content')
+          end
+
+          it 'should fail' do
+            expected_message = /expected content to be "content"/
+            expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          end
+        end
+      end
+    end
   end
 end
