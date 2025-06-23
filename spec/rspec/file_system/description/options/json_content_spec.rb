@@ -5,7 +5,7 @@ RSpec.describe RSpec::FileSystem::Options::JsonContent do
 
   context 'when the expected value is true' do
     let(:expected) { true }
-    it { is_expected.to eq('true') }
+    it { is_expected.to eq('be json content') }
   end
 
   context 'with a matcher' do

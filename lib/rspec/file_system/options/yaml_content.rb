@@ -10,7 +10,9 @@ module RSpec
         def self.key = :yaml_content
 
         def self.description(expected)
-          RSpec::FileSystem.matcher?(expected) ? expected.description : expected.to_s
+          return 'be yaml content' if expected == true
+
+          expected.description
         end
 
         def self.validate_expected(expected, failure_messages)

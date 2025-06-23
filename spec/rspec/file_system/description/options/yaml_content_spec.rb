@@ -8,7 +8,7 @@ RSpec.describe RSpec::FileSystem::Options::YamlContent do
 
   context 'when the expected value is true' do
     let(:expected) { true }
-    it { is_expected.to eq('true') }
+    it { is_expected.to eq('be yaml content') }
   end
 
   context 'with a matcher' do

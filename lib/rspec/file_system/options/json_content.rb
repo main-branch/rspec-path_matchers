@@ -10,7 +10,9 @@ module RSpec
         def self.key = :json_content
 
         def self.description(expected)
-          RSpec::FileSystem.matcher?(expected) ? expected.description : expected.to_s
+          return 'be json content' if expected == true
+
+          expected.description
         end
 
         def self.validate_expected(expected, failure_messages)
