@@ -7,6 +7,10 @@ module RSpec
       class SymlinkMtime
         def self.key = :mtime
 
+        def self.description(expected)
+          RSpec::FileSystem.matcher?(expected) ? expected.description : expected.inspect
+        end
+
         def self.validate_expected(expected, failure_messages)
           return if expected == NOT_GIVEN ||
                     expected.is_a?(Time) || expected.is_a?(DateTime) ||

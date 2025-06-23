@@ -9,6 +9,10 @@ module RSpec
       class YamlContent
         def self.key = :yaml_content
 
+        def self.description(expected)
+          RSpec::FileSystem.matcher?(expected) ? expected.description : expected.to_s
+        end
+
         def self.validate_expected(expected, failure_messages)
           return if expected == NOT_GIVEN ||
                     expected == true ||

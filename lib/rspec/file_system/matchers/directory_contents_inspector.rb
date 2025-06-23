@@ -11,6 +11,11 @@ module RSpec
       # @api private
       #
       class DirectoryContentsInspector
+        # By including RSpec::Matchers, we make methods like `be`, `eq`, `include`,
+        # `an_instance_of`, etc., available within the `have_dir` block
+        #
+        include RSpec::Matchers
+
         def initialize
           @nested_matchers = []
         end

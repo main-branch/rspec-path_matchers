@@ -7,6 +7,10 @@ module RSpec
       class SymlinkTargetType
         def self.key = :target_type
 
+        def self.description(expected)
+          RSpec::FileSystem.matcher?(expected) ? expected.description : expected.inspect
+        end
+
         def self.validate_expected(expected, failure_messages)
           return if expected == NOT_GIVEN ||
                     expected.is_a?(String) || expected.is_a?(Symbol) ||

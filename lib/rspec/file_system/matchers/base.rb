@@ -13,6 +13,22 @@ module RSpec
 
         attr_reader :name, :options, :base_path, :path
 
+        # A human-readable description of the matcher's expectation
+        #
+        # This is used by RSpec to build the failure message when an `expect(...).to`
+        # expectation is not met. For example, if a test asserts `expect(path).to
+        # have_file("foo")` and the file does not exist, the failure message will
+        # include the output of this method: "expected to have file \"foo\"".
+        #
+        # @return [String] A description of the matcher
+        #
+        def description
+          desc = "have #{entry_type} #{name.inspect}"
+          options_description = build_options_description
+          desc += " with #{options_description}" unless options_description.empty?
+          desc
+        end
+
         def failure_messages
           @failure_messages ||= []
         end
@@ -54,6 +70,10 @@ module RSpec
 
         protected
 
+        def entry_type
+          self.class.name.split('::').last.sub(/^Have/, '').downcase
+        end
+
         # Performs the actual matching against the file system
         #
         # This method assumes that collect_validation_errors has already been called
@@ -74,6 +94,15 @@ module RSpec
         end
 
         private
+
+        def build_options_description
+          descriptions = options.to_h.filter_map do |key, value|
+            next if value == RSpec::FileSystem::Options::NOT_GIVEN
+
+            "#{key.to_s.chomp('?')} #{option_definition(key).description(value)}"
+          end
+          descriptions.join(' and ')
+        end
 
         def options_factory(*members, **options_hash)
           Data.define(*members) do

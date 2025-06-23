@@ -7,6 +7,10 @@ module RSpec
       class SymlinkTargetExist
         def self.key = :target_exist?
 
+        def self.description(expected)
+          RSpec::FileSystem.matcher?(expected) ? expected.description : expected.to_s
+        end
+
         def self.validate_expected(expected, failure_messages)
           return if expected == NOT_GIVEN ||
                     expected.is_a?(TrueClass) || expected.is_a?(FalseClass) ||

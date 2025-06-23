@@ -1,27 +1,32 @@
 # RSpec::FileSystem
 
-[![Gem Version](https://img.shields.io/gem/v/rspec-file_system.svg)](https://rubygems.org/gems/rspec-file_system)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/main-branch/rspec-file_system/main.yml?branch=main)](https://github.com/main-branch/rspec-file_system/actions)
-[![MIT License](https://img.shields.io/badge/license-MIT-green)](https://opensource.org/licenses/MIT)
+[![Gem
+Version](https://img.shields.io/gem/v/rspec-file_system.svg)](https://rubygems.org/gems/rspec-file_system)
+[![Build
+Status](https://img.shields.io/github/actions/workflow/status/main-branch/rspec-file_system/main.yml?branch=main)](https://github.com/main-branch/rspec-file_system/actions)
+[![MIT
+License](https://img.shields.io/badge/license-MIT-green)](https://opensource.org/licenses/MIT)
 
-**RSpec::FileSystem** provides a rich and comprehensive suite of RSpec matchers for testing file system structures.
+**RSpec::FileSystem** provides a rich and comprehensive suite of RSpec matchers for
+testing file system structures.
 
 Verifying that a generator, build script, or any file-manipulating process has
 produced the correct output can be tedious and verbose. This gem makes those
 assertions simple, declarative, and easy to read, allowing you to describe an entire
 file tree and its properties within your specs.
 
-Here’s a breakdown of the value this API provides over what is available in standard RSpec.
+Here’s a breakdown of the value this API provides over what is available in standard
+RSpec.
 
-1. Abstraction and Readability: From Imperative to Declarative
+### 1. Abstraction and Readability: From Imperative to Declarative
 
-    Standard RSpec forces you to describe how to test something. This API allows you
-    to declaratively state what the system should look like.
+    Standard RSpec forces you to describe *how* to test something. This API allows you
+    to declaratively state *what* the system should look like.
 
     Without this API (Imperative Style):
 
     ```ruby
-    # This code describes the HOW: stat the file, get the mode, convert to octal, take the last 4 chars...
+    # This code describes the HOW: stat the file, get the mode, convert to octal...
     # It's a script, not a specification.
     path = '/var/www/html/index.html'
     expect(File.exist?(path)).to be true
@@ -29,7 +34,7 @@ Here’s a breakdown of the value this API provides over what is available in st
     expect(File.stat(path).owned?).to be true # This just checks if UID matches script runner
     ```
 
-    With Your API (Declarative Style):
+    With this API (Declarative Style):
 
     ```ruby
     # This code describes the WHAT. The implementation details are hidden.
@@ -37,13 +42,13 @@ Here’s a breakdown of the value this API provides over what is available in st
     expect('/var/www/html').to have_file('index.html', mode: '0644', owner: 'httpd')
     ```
 
-    This hides the complex, imperative logic inside the matcher and expose a clean,
+    This hides the complex, imperative logic inside the matcher and exposes a clean,
     readable, domain-specific language (DSL).
 
-2. Conciseness and Cohesion: Grouping Related Assertions
+### 2. Conciseness and Cohesion: Grouping Related Assertions
 
     Without this API, testing multiple attributes of a single file requires
-    fragmented, repetitive expect calls. Your API groups these assertions into one
+    fragmented, repetitive `expect` calls. Your API groups these assertions into one
     cohesive, logical block.
 
     Without this API:
@@ -60,16 +65,16 @@ Here’s a breakdown of the value this API provides over what is available in st
 
     ```ruby
     expect('/var/data').to have_file('status.json',
-        size: be > 0,
-        content: not(/error/),
-        json_content: include('status' => 'complete')
+      size: be > 0,
+      content: not(/error/),
+      json_content: include('status' => 'complete')
     )
     ```
 
     This is far easier to read and maintain because all the assertions about
-    status.json are in one place.
+    `status.json` are in one place.
 
-3. The Nested Directory DSL Adds to the Expressive Power
+### 3. The Nested Directory DSL Adds to the Expressive Power
 
     This is where this API provides something that base RSpec simply cannot do
     elegantly. Describing the state of a directory tree with standard RSpec is
@@ -100,6 +105,34 @@ Here’s a breakdown of the value this API provides over what is available in st
     The nested block is a leap in expressiveness and power, allowing you to write
     complex integration and infrastructure tests with ease.
 
+### 4. Descriptive and Intelligible Failure Messages
+
+    When a complex, nested expectation fails, this gem pinpoints the exact failure,
+    saving you valuable debugging time.
+
+    **Standard RSpec Failure:**
+
+    ```
+    expected: true
+         got: false
+    ```
+
+    This kind of message forces you to manually inspect the file system to understand
+    what went wrong.
+
+    **With this API:**
+
+    You get a detailed, hierarchical report that shows the full expectation and
+    clearly marks what failed.
+
+    ```
+    the entry 'my-app' at '/tmp/d20250622-12345-abcdef' was expected to satisfy the following but did not:
+    - have directory "config" containing:
+      - have file "database.yml" with owner "db_user" and mode "0600"
+        - expected owner to be "db_user", but was "root"
+        - expected mode to be "0600", but was "0644"
+    ```
+
 ## Installation
 
 Add this line to your application's `Gemfile` in the `:test` or `:development` group:
@@ -111,11 +144,13 @@ end
 ```
 
 And then execute:
+
 ```bash
 $ bundle install
 ```
 
 Or install it yourself as:
+
 ```bash
 $ gem install rspec-file_system
 ```
@@ -163,26 +198,27 @@ end
 
 it "validates file content" do
   # Check for content with a string or regex
-  expect(@tmpdir).to have_file("app.log").with_content("INFO: User logged in")
-  expect(@tmpdir).to have_file("app.log").with_content(/WARN:.*space/)
+  expect(@tmpdir).to have_file("app.log", content: "INFO: User logged in")
+  expect(@tmpdir).to have_file("app.log", content: /WARN:.*space/)
 
   # Check for the absence of content
-  expect(@tmpdir).to have_file("app.log").without_content(/ERROR/)
+  expect(@tmpdir).to have_file("app.log", content: not(/ERROR/))
 
   # Check if a file is empty
-  expect(@tmpdir).to have_file("empty.file").be_empty
+  expect(@tmpdir).to have_file("empty.file", size: 0)
 
   # Check for valid JSON and match its structure
-  expect(@tmpdir).to have_file("config.json").with_json_content(
+  expect(@tmpdir).to have_file("config.json", json_content: {
     "theme" => "dark",
     "version" => an_instance_of(Integer)
-  )
+  })
 end
 ```
 
 ### Attribute Assertions
 
-You can chain assertions to verify file metadata like permissions, ownership, size, and symlinks.
+You can chain assertions to verify file metadata like permissions, ownership, size,
+and symlinks.
 
 ```ruby
 before do
@@ -200,29 +236,21 @@ end
 
 it "validates file attributes" do
   # A single file can have many attributes checked at once
-  expect(@tmpdir).to have_file("deploy.sh").with_mode("755").with_size(be > 10)
+  expect(@tmpdir).to have_file("deploy.sh", mode: "0755", size: be > 10)
 
   # On Unix systems, you can check ownership
   current_user = Etc.getlogin
-  expect(@tmpdir).to have_file("secret.key").owned_by(current_user).with_mode("600")
+  expect(@tmpdir).to have_file("secret.key", owner: current_user, mode: "0600")
 
   # Check symlinks and their targets
-  expect(@tmpdir).to have_file("latest_script").linking_to("deploy.sh")
-
-  # Check if something is a symlink without caring about the target
-  expect(@tmpdir).to have_file("latest_script").linking_to(:anything)
-  # or
-  # This works if `anything` is available in your test environment.
-  # If it isn't, you can add it to your environment by adding
-  # `config.include RSpec::Mocks::ArgumentMatchers` to the `RSpec.config`
-  # block in your `spec_helper.rb`.
-  expect(@tmpdir).to have_file("latest_script").linking_to(anything)
+  expect(@tmpdir).to have_symlink("latest_script", target: "deploy.sh")
 end
 ```
 
 ### Directory Structure Assertions
 
-This is the most powerful feature. Use `have_dir` with a `containing` block to describe and verify an entire file tree.
+This is the most powerful feature. Use `have_dir` with a block to describe and verify
+an entire file tree.
 
 ```ruby
 before do
@@ -240,67 +268,39 @@ before do
 end
 
 it "validates a nested directory structure" do
-  expect(@tmpdir).to have_dir("my-app").containing do
+  expect(@tmpdir).to have_dir("my-app") do
     # Assert on the 'bin' directory and its contents
     dir "bin" do
-      file "run", mode: "755", with_content: /bash/
+      file "run", mode: "0755", content: /bash/
     end
 
     # Assert on the 'config' directory and its contents
     dir "config" do
       file "database.yml"
-      file "db.yml", symlink_to: "database.yml"
+      symlink "db.yml", target: "database.yml"
     end
 
     # Assert that the 'log' directory is present and empty
-    dir "log", be_empty: true
+    dir "log"
   end
-end
-```
-
-#### Exclusive and Negative Content
-
-You can be even more specific about a directory's contents.
-
-```ruby
-# `containing_only` fails if any other files are present
-it "ensures a directory contains only the specified files" do
-  expect(@tmpdir).to have_dir("my-app/bin").containing_only do
-    file "run"
-  end
-end
-
-# `but_not` fails if any of the specified files are present
-it "ensures a directory does not contain certain files" do
-  expect(@tmpdir).to have_dir("my-app/config").but_not do
-    file "secrets.yml"
-    file "credentials.rb"
-  end
-end
-```
-
-### Convenience Alias Matchers
-
-For common checks, you can use these simple, readable aliases.
-
-```ruby
-it "uses convenient alias matchers" do
-  expect(@tmpdir).to have_executable("my-app/bin/run")
-  expect(@tmpdir).to have_symlink("my-app/config/db.yml")
-  expect(@tmpdir).to have_empty_dir("my-app/log")
 end
 ```
 
 ## Development
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake
+spec` to run the tests. You can also run `bin/console` for an interactive prompt that
+will allow you to experiment.
 
 To install this gem onto your local machine, run `bundle exec rake install`.
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at [https://github.com/main-branch/rspec-file_system](https://github.com/main-branch/rspec-file_system). This project is intended to be a safe, welcoming space for collaboration.
+Bug reports and pull requests are welcome on GitHub at
+https://github.com/main-branch/rspec-file_system. This project is intended to be a
+safe, welcoming space for collaboration.
 
 ## License
 
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+The gem is available as open source under the terms of the [MIT
+License](https://opensource.org/licenses/MIT).

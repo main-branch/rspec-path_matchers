@@ -31,6 +31,20 @@ module RSpec
           @nested_matchers = inspector.nested_matchers
         end
 
+        # (see Base#description)
+        def description
+          desc = super
+          return desc if nested_matchers.empty?
+
+          nested_descriptions = nested_matchers.map do |matcher|
+            matcher.description.lines.map.with_index do |line, i|
+              i.zero? ? "- #{line.chomp}" : "  #{line.chomp}"
+            end.join("\n")
+          end
+
+          "#{desc} containing:\n  #{nested_descriptions.join("\n  ")}"
+        end
+
         # Overrides Base to add recursive validation for nested matchers
         def collect_validation_errors(errors)
           super # Validate this directory's own options first.
