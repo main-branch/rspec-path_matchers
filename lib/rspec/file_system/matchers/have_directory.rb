@@ -53,7 +53,19 @@ module RSpec
           end
         end
 
+        def collect_negative_validation_errors(errors)
+          super
+
+          return unless nested_matchers.any?
+
+          errors << 'The matcher `not_to have_dir(...)` cannot be given a block'
+        end
+
         def option_definitions = OPTIONS
+
+        def correct_type? = File.directory?(path)
+
+        def matcher_name = 'have_dir'
 
         protected
 

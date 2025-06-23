@@ -185,6 +185,41 @@ it "creates the basic structure" do
 end
 ```
 
+### Negative Assertions (Checking for Absence)
+
+You can use `not_to` to ensure that a file, directory, or symlink of a specific
+type does not exist.
+
+- `not_to have_file` passes if the entry is a directory, a symlink, or non-existent.
+- `not_to have_dir` passes if the entry is a file, a symlink, or non-existent.
+- `not_to have_symlink` passes if the entry is a file, a directory, or non-existent.
+
+**Important:** Negative matchers cannot be given options (`:mode`, `:content`, etc.)
+or blocks.
+
+```ruby
+it "can check for the absence of entries" do
+  # Setup
+  Dir.mkdir(File.join(@tmpdir, "existing_dir"))
+  File.write(File.join(@tmpdir, "existing_file.txt"), "content")
+
+  # Assert that a path that doesn't exist fails all checks
+  expect(@tmpdir).not_to have_file("non_existent.txt")
+  expect(@tmpdir).not_to have_dir("non_existent_dir")
+  expect(@tmpdir).not_to have_symlink("non_existent_link")
+
+  # Assert that an existing directory is NOT a file or symlink
+  expect(@tmpdir).not_to have_file("existing_dir")
+  expect(@tmpdir).not_to have_symlink("existing_dir")
+  # expect(@tmpdir).not_to have_dir("existing_dir") # This would fail
+
+  # Assert that an existing file is NOT a directory or symlink
+  expect(@tmpdir).not_to have_dir("existing_file.txt")
+  expect(@tmpdir).not_to have_symlink("existing_file.txt")
+  # expect(@tmpdir).not_to have_file("existing_file.txt") # This would fail
+end
+```
+
 ### File Content Assertions
 
 Go beyond existence and inspect what's inside a file.

@@ -104,6 +104,89 @@ RSpec.describe 'the have_file matcher' do
     end
   end
 
+  describe 'not_to have_file' do
+    context 'with no options and no block' do
+      subject { expect(tmpdir).not_to have_file(expected_name) }
+
+      context 'when the entry at the given path does not exist' do
+        before { FileUtils.rm_rf(path) }
+        it 'should not fail' do
+          expect { subject }.not_to raise_error
+        end
+      end
+
+      context 'when the entry at the given path is a directory' do
+        before do
+          FileUtils.rm_rf(path)
+          Dir.mkdir(path)
+        end
+
+        it 'should not fail' do
+          expect { subject }.not_to raise_error
+        end
+      end
+
+      context 'when the entry at the given path is a file' do
+        # The top level `before` block creates a file at the path
+        it 'should fail' do
+          expected_message = /expected it not to be a file/
+          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+        end
+      end
+
+      context 'when the entry at the given path is a symlink to a directory' do
+        let(:target_dir) { File.join(tmpdir, 'target_dir') }
+
+        before do
+          FileUtils.rm_rf(path)
+          Dir.mkdir(target_dir)
+          File.symlink(target_dir, path)
+        end
+
+        it 'should not fail' do
+          expect { subject }.not_to raise_error
+        end
+      end
+
+      context 'when the entry at the given path is a symlink to a file' do
+        let(:target_file) { File.join(tmpdir, 'target_file.txt') }
+
+        before do
+          FileUtils.rm_rf(path)
+          File.write(target_file, 'I am a file')
+          File.symlink(target_file, path)
+        end
+
+        it 'should fail' do
+          expected_message = /expected it not to be a file/
+          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+        end
+      end
+
+      context 'when the entry at the given path is a dangling symlink' do
+        let(:dangling_target) { File.join(tmpdir, 'non_existent_target') }
+
+        before do
+          FileUtils.rm_rf(path)
+          File.symlink(dangling_target, path)
+        end
+
+        it 'should not fail' do
+          expect { subject }.not_to raise_error
+        end
+      end
+    end
+
+    context 'with any options' do
+      subject { expect(tmpdir).not_to have_file(expected_name, mode: '0755') }
+
+      it 'should raise an ArgumentError' do
+        expected_message = 'The matcher `not_to have_file(...)` cannot be given options'
+        expect { subject }.to raise_error(ArgumentError, expected_message)
+      end
+    end
+  end
+
   context 'when given invalid options' do
     before do
       FileUtils.touch(File.join(tmpdir, expected_name))

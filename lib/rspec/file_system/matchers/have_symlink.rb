@@ -21,6 +21,10 @@ module RSpec
 
         def option_definitions = OPTIONS
 
+        def correct_type? = File.symlink?(path)
+
+        def matcher_name = 'have_symlink'
+
         protected
 
         def validate_existance(failure_messages)

@@ -13,5 +13,17 @@ RSpec.describe RSpec::FileSystem::Matchers::Base do
         expect { matcher.matches?('/tmp') }.to raise_error(NotImplementedError)
       end
     end
+
+    describe '#correct_type?' do
+      it 'raises NotImplementedError' do
+        expect { matcher.correct_type? }.to raise_error(NotImplementedError)
+      end
+    end
+
+    describe '#matcher_name' do
+      it 'raises NotImplementedError' do
+        expect { matcher.matcher_name }.to raise_error(NotImplementedError)
+      end
+    end
   end
 end

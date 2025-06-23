@@ -58,6 +58,85 @@ RSpec.describe 'the have_symlink matcher' do
     end
   end
 
+  describe 'not_to have_symlink' do
+    context 'with no options and no block' do
+      subject { expect(tmpdir).not_to have_symlink(expected_name) }
+
+      context 'when the entry at the given path does not exist' do
+        before { FileUtils.rm_rf(path) }
+        it 'should not fail' do
+          expect { subject }.not_to raise_error
+        end
+      end
+
+      context 'when the entry at the given path is a directory' do
+        before do
+          FileUtils.rm_rf(path)
+          Dir.mkdir(path)
+        end
+
+        it 'should not fail' do
+          expect { subject }.not_to raise_error
+        end
+      end
+
+      context 'when the entry at the given path is a file' do
+        before do
+          FileUtils.rm_rf(path)
+          File.write(path, 'I am a file')
+        end
+
+        it 'should not fail' do
+          expect { subject }.not_to raise_error
+        end
+      end
+
+      context 'when the entry at the given path is a symlink to a directory' do
+        before do
+          Dir.mkdir(target_path)
+        end
+
+        it 'should fail' do
+          expected_message = /expected it not to be a symlink/
+          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+        end
+      end
+
+      context 'when the entry at the given path is a symlink to a file' do
+        let(:target_file) { File.join(tmpdir, 'target_file.txt') }
+
+        before do
+          File.write(target_path, 'I am a file')
+        end
+
+        it 'should fail' do
+          expected_message = /expected it not to be a symlink/
+          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+        end
+      end
+
+      context 'when the entry at the given path is a dangling symlink' do
+        let(:dangling_target) { File.join(tmpdir, 'non_existent_target') }
+
+        # The top level `before` block creates a dangling symlink
+
+        it 'should fail' do
+          expected_message = /expected it not to be a symlink/
+          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+        end
+      end
+    end
+
+    context 'with any options' do
+      subject { expect(tmpdir).not_to have_symlink(expected_name, owner: 'root') }
+
+      it 'should raise an ArgumentError' do
+        expected_message = 'The matcher `not_to have_symlink(...)` cannot be given options'
+        expect { subject }.to raise_error(ArgumentError, expected_message)
+      end
+    end
+  end
+
   context 'when given invalid options' do
     before do
       FileUtils.touch(File.join(tmpdir, expected_name))

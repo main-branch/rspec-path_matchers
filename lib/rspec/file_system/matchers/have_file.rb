@@ -23,6 +23,10 @@ module RSpec
 
         def option_definitions = OPTIONS
 
+        def correct_type? = File.file?(path)
+
+        def matcher_name = 'have_file'
+
         protected
 
         def validate_existance(failure_messages)

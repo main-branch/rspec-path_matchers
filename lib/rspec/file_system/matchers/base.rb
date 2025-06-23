@@ -4,7 +4,7 @@ module RSpec
   module FileSystem
     module Matchers
       # The base class for file system matchers
-      class Base
+      class Base # rubocop:disable Metrics/ClassLength
         def initialize(name, **options_hash)
           super()
           @name = name.to_s
@@ -47,6 +47,36 @@ module RSpec
           execute_match(base_path)
         end
 
+        def collect_negative_validation_errors(errors)
+          return unless options.to_h.values.any? { |v| v != RSpec::FileSystem::Options::NOT_GIVEN }
+
+          errors << "The matcher `not_to #{matcher_name}(...)` cannot be given options"
+        end
+
+        # This method is called by RSpec for `expect(...).not_to have_...`
+        def does_not_match?(base_path) # rubocop:disable Naming/PredicatePrefix
+          # 1. Validate that no options were passed to the negative matcher.
+          validation_errors = []
+          collect_negative_validation_errors(validation_errors)
+          raise ArgumentError, validation_errors.join(', ') if validation_errors.any?
+
+          @base_path = base_path.to_s
+          @path = File.join(base_path, name)
+
+          # 2. A negative match SUCCEEDS if the entry of the specified type does NOT exist.
+          #    We delegate the type-specific check to the subclass.
+          #    The method returns `true` if the entry is NOT of the correct type (pass),
+          #    and `false` if it IS of the correct type (fail).
+          !correct_type?
+        end
+
+        # This is the message RSpec will display if `does_not_match?` returns `false`.
+        def failure_message_when_negated
+          # This will read nicely, e.g.:
+          # "expected '/tmp' not to have file "foo.txt""
+          "expected it not to be a #{entry_type}"
+        end
+
         # Recursively gathers all syntax/validation errors
         #
         # Subclasses (like HaveDirectory) may extend this to recurse into nested
@@ -66,6 +96,14 @@ module RSpec
           header = "the entry '#{name}' at '#{base_path}' was expected to satisfy the following but did not:"
           messages = failure_messages.map { |msg| "  - #{msg.gsub(/^/, '  ')}" }.join("\n")
           "#{header}\n#{messages.sub('  ', '')}"
+        end
+
+        def correct_type?
+          raise NotImplementedError, 'This method should be implemented in a subclass'
+        end
+
+        def matcher_name
+          raise NotImplementedError, 'This method should be implemented in a subclass'
         end
 
         protected
