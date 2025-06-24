@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe RSpec::FileSystem::Options::JsonContent do
+RSpec.describe RSpec::PathMatchers::Options::JsonContent do
   subject { described_class.description(expected) }
 
   context 'when the expected value is true' do

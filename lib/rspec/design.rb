@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 ########################################
-# Matchers for file system objects
+# Matchers for directory entries
 expect(path).to have_file(
   name, content:, json_content:, yaml_content:, size:, mode:, owner:, group:, ctime:, mtime:
 )

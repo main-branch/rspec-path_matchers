@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe RSpec::FileSystem::Options::SymlinkAtime do
+RSpec.describe RSpec::PathMatchers::Options::SymlinkAtime do
   subject { described_class.description(expected) }
 
   let(:now) { Time.new(2025, 6, 22, 15, 23, 0, '-07:00') }

@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
-require 'rspec/file_system'
+require 'rspec/path_matchers'
 
-RSpec.describe RSpec::FileSystem::Options::YamlContent do
+RSpec.describe RSpec::PathMatchers::Options::YamlContent do
   subject { described_class.description(expected) }
 
   context 'when the expected value is true' do

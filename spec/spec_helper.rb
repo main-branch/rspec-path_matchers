@@ -41,4 +41,4 @@ SimpleCov::RSpec.start(list_uncovered_lines: ci_build?) do
   minimum_coverage line: 100, branch: 100
 end
 
-require 'rspec/file_system'
+require 'rspec/path_matchers'

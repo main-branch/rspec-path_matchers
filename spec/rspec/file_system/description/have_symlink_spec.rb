@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
-require 'rspec/file_system'
+require 'rspec/path_matchers'
 
 RSpec.describe 'have_symlink.description' do
   let(:matcher) { have_symlink('a.link', **options) }

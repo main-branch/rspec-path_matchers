@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe RSpec::FileSystem::Matchers::HaveNoEntry do
+RSpec.describe RSpec::PathMatchers::Matchers::HaveNoEntry do
   let(:matcher) { described_class.new(name, type:) }
 
   describe '#description' do

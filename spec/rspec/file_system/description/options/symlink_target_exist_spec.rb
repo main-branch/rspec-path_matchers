@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe RSpec::FileSystem::Options::SymlinkTargetExist do
+RSpec.describe RSpec::PathMatchers::Options::SymlinkTargetExist do
   subject { described_class.description(expected) }
 
   context 'when the expected value is true' do

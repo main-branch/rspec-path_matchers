@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
-require 'rspec/file_system'
+require 'rspec/path_matchers'
 require 'tmpdir'
 
 RSpec.describe 'the have_dir matcher' do

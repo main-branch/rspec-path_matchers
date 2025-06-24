@@ -1,21 +1,21 @@
 # frozen_string_literal: true
 
-require_relative 'lib/rspec/file_system/version'
+require_relative 'lib/rspec/path_matchers/version'
 
 Gem::Specification.new do |spec|
-  spec.name = 'rspec-file_system'
-  spec.version = RSpec::FileSystem::VERSION
+  spec.name = 'rspec-path_matchers'
+  spec.version = RSpec::PathMatchers::VERSION
   spec.authors = ['James Couball']
   spec.email = ['jcouball@yahoo.com']
 
-  spec.summary = 'A comprehensive RSpec matcher suite for testing file system structures.'
+  spec.summary = 'A comprehensive RSpec matcher suite for testing directory structures.'
   spec.description = <<~DESCRIPTION
     Provides a rich, fluent DSL for RSpec to assert on files, directories,
     symlinks, permissions, content (including JSON), and more. Ideal for
     testing generators and build scripts.
   DESCRIPTION
 
-  spec.homepage = 'https://github.com/main-branch/rspec-file_system'
+  spec.homepage = 'https://github.com/main-branch/rspec-path_matchers'
   spec.metadata['homepage_uri'] = spec.homepage
   spec.metadata['source_code_uri'] = spec.homepage
   spec.metadata['documentation_uri'] = "https://rubydoc.info/gems/#{spec.name}/#{spec.version}"

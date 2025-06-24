@@ -1,14 +1,14 @@
-# RSpec::FileSystem
+# The rspec-path_matchers gem
 
 [![Gem
-Version](https://img.shields.io/gem/v/rspec-file_system.svg)](https://rubygems.org/gems/rspec-file_system)
+Version](https://img.shields.io/gem/v/rspec-path_matchers.svg)](https://rubygems.org/gems/rspec-path_matchers)
 [![Build
-Status](https://img.shields.io/github/actions/workflow/status/main-branch/rspec-file_system/main.yml?branch=main)](https://github.com/main-branch/rspec-file_system/actions)
+Status](https://img.shields.io/github/actions/workflow/status/main-branch/rspec-path_matchers/main.yml?branch=main)](https://github.com/main-branch/rspec-path_matchers/actions)
 [![MIT
 License](https://img.shields.io/badge/license-MIT-green)](https://opensource.org/licenses/MIT)
 
-**RSpec::FileSystem** provides a rich and comprehensive suite of RSpec matchers for
-testing file system structures.
+**RSpec::PathMatchers** provides a rich and comprehensive suite of RSpec matchers for
+testing directory structures.
 
 Verifying that a generator, build script, or any file-manipulating process has
 produced the correct output can be tedious and verbose. This gem makes those
@@ -21,7 +21,7 @@ RSpec.
 ### 1. Abstraction and Readability: From Imperative to Declarative
 
     Standard RSpec forces you to describe *how* to test something. This API allows you
-    to declaratively state *what* the system should look like.
+    to declaratively state *what* the directory structure should look like.
 
     Without this API (Imperative Style):
 
@@ -117,7 +117,7 @@ RSpec.
          got: false
     ```
 
-    This kind of message forces you to manually inspect the file system to understand
+    This kind of message forces you to manually inspect the directory structure to understand
     what went wrong.
 
     **With this API:**
@@ -139,7 +139,7 @@ Add this line to your application's `Gemfile` in the `:test` or `:development` g
 
 ```ruby
 group :test, :development do
-  gem 'rspec-file_system'
+  gem 'rspec-path_matchers'
 end
 ```
 
@@ -152,7 +152,7 @@ $ bundle install
 Or install it yourself as:
 
 ```bash
-$ gem install rspec-file_system
+$ gem install rspec-path_matchers
 ```
 
 ## Setup
@@ -161,7 +161,7 @@ Require the gem in your `spec/spec_helper.rb` file:
 
 ```ruby
 # spec/spec_helper.rb
-require 'rspec/file_system'
+require 'rspec/path_matchers'
 ```
 
 ## Usage & Examples
@@ -334,7 +334,7 @@ specification block by using the `exact: true` option. This is perfect for testi
 generators or build scripts that should produce a clean, specific output without any
 extra files.
 
-If any undeclared entries are found on the filesystem, the matcher will fail.
+If any undeclared entries are found on the PathMatchers, the matcher will fail.
 
 ```ruby
 it "creates a directory with only the expected files" do
@@ -368,7 +368,7 @@ To install this gem onto your local machine, run `bundle exec rake install`.
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at
-https://github.com/main-branch/rspec-file_system. This project is intended to be a
+https://github.com/main-branch/rspec-path_matchers. This project is intended to be a
 safe, welcoming space for collaboration.
 
 ## License

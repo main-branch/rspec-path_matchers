@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe RSpec::FileSystem::Options::Group do
+RSpec.describe RSpec::PathMatchers::Options::Group do
   subject { described_class.description(expected) }
 
   context 'when the expected value is a String' do

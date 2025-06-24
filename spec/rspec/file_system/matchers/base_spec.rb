@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RSpec.describe RSpec::FileSystem::Matchers::Base do
+RSpec.describe RSpec::PathMatchers::Matchers::Base do
   context 'when subclassed to create a matcher' do
     let(:matcher) do
       Class.new(described_class) do
