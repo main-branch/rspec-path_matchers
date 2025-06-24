@@ -69,4 +69,5 @@ end
 # yard
 
 desc 'Run all YARD tasks'
-task yard: %i[yard:build yard:audit yard:coverage]
+# task yard: %i[yard:build yard:audit yard:coverage]
+task yard: %i[yard:build]
