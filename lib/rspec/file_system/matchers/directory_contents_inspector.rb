@@ -36,6 +36,21 @@ module RSpec
         def symlink(name, **options)
           nested_matchers << RSpec::FileSystem::Matchers::HaveSymlink.new(name, **options)
         end
+
+        # Defines an expectation that a file does NOT exist within the directory.
+        def no_file(name)
+          nested_matchers << RSpec::FileSystem::Matchers::HaveNoEntry.new(name, type: :file)
+        end
+
+        # Defines an expectation that a directory does NOT exist within the directory.
+        def no_dir(name)
+          nested_matchers << RSpec::FileSystem::Matchers::HaveNoEntry.new(name, type: :directory)
+        end
+
+        # Defines an expectation that a symlink does NOT exist within the directory.
+        def no_symlink(name)
+          nested_matchers << RSpec::FileSystem::Matchers::HaveNoEntry.new(name, type: :symlink)
+        end
       end
     end
   end

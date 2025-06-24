@@ -16,6 +16,7 @@ require_relative 'file_system/options'
 require_relative 'file_system/matchers/have_file'
 require_relative 'file_system/matchers/have_directory'
 require_relative 'file_system/matchers/have_symlink'
+require_relative 'file_system/matchers/have_no_entry'
 
 def have_file(name, **options_hash) # rubocop:disable Naming/PredicatePrefix
   RSpec::FileSystem::Matchers::HaveFile.new(name, **options_hash)

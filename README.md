@@ -95,11 +95,11 @@ RSpec.
 
     ```ruby
     # This is a clear, hierarchical specification of the directory's contents.
-    expect('/etc/service').to have_dir('nginx') do
+    expect('/etc/service').to(have_dir('nginx') do
       file('run')
       dir('log')
       no_file('down')
-    end
+    end)
     ```
 
     The nested block is a leap in expressiveness and power, allowing you to write
@@ -181,7 +181,6 @@ it "creates the basic structure" do
   # Assertions
   expect(@tmpdir).to have_file("config.yml")
   expect(@tmpdir).to have_dir("app")
-  expect(@tmpdir).not_to have_file("database.yml")
 end
 ```
 
@@ -284,8 +283,9 @@ end
 
 ### Directory Structure Assertions
 
-This is the most powerful feature. Use `have_dir` with a block to describe and verify
-an entire file tree.
+The block syntax is the most powerful feature. It allows you to describe and verify
+an entire file tree, including both the presence and *absence* of entries using
+methods like `no_file`, `no_dir`, and `no_symlink`.
 
 ```ruby
 before do
@@ -303,7 +303,8 @@ before do
 end
 
 it "validates a nested directory structure" do
-  expect(@tmpdir).to have_dir("my-app") do
+  # Note the parentheses around the matcher and its block
+  expect(@tmpdir).to(have_dir("my-app") do
     # Assert on the 'bin' directory and its contents
     dir "bin" do
       file "run", mode: "0755", content: /bash/
@@ -313,11 +314,16 @@ it "validates a nested directory structure" do
     dir "config" do
       file "database.yml"
       symlink "db.yml", target: "database.yml"
+      no_file "secrets.yml" # Assert that a file is NOT present
     end
 
     # Assert that the 'log' directory is present and empty
     dir "log"
-  end
+
+    # Assert the absence of other entries at the root of 'my-app'
+    no_dir "tmp"
+    no_file "README.md"
+  end)
 end
 ```
 

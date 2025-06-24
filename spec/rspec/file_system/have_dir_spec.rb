@@ -1020,4 +1020,158 @@ RSpec.describe 'the have_dir matcher' do
       end
     end
   end
+
+  context 'with negative assertions in the block' do
+    describe 'the no_file method' do
+      subject do
+        expect(tmpdir).to(
+          have_dir(expected_name) do
+            no_file('entry.txt')
+          end
+        )
+      end
+
+      context 'when the file does not exist' do
+        it 'should not fail' do
+          expect { subject }.not_to raise_error
+        end
+      end
+
+      context 'when an entry with the same name exists but is a directory' do
+        before do
+          Dir.mkdir(File.join(path, 'entry.txt'))
+        end
+
+        it 'should not fail' do
+          expect { subject }.not_to raise_error
+        end
+      end
+
+      context 'when the file exists' do
+        before do
+          File.write(File.join(path, 'entry.txt'), 'content')
+        end
+
+        it 'should fail' do
+          expected_message = /expected file 'entry\.txt' not to be found at '.*', but it exists/
+          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+        end
+      end
+    end
+
+    describe 'the no_dir method' do
+      subject do
+        expect(tmpdir).to(
+          have_dir(expected_name) do
+            no_dir('subdir')
+          end
+        )
+      end
+
+      context 'when the directory does not exist' do
+        it 'should not fail' do
+          expect { subject }.not_to raise_error
+        end
+      end
+
+      context 'when an entry with the same name exists but is a file' do
+        before do
+          File.write(File.join(path, 'subdir'), 'content')
+        end
+
+        it 'should not fail' do
+          expect { subject }.not_to raise_error
+        end
+      end
+
+      context 'when the directory exists' do
+        before do
+          Dir.mkdir(File.join(path, 'subdir'))
+        end
+
+        it 'should fail' do
+          expected_message = /expected directory 'subdir' not to be found at '.*', but it exists/
+          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+        end
+      end
+    end
+
+    describe 'the no_symlink method' do
+      subject do
+        expect(tmpdir).to(
+          have_dir(expected_name) do
+            no_symlink('a_link')
+          end
+        )
+      end
+
+      context 'when the symlink does not exist' do
+        it 'should not fail' do
+          expect { subject }.not_to raise_error
+        end
+      end
+
+      context 'when an entry with the same name exists but is a file' do
+        before do
+          File.write(File.join(path, 'a_link'), 'content')
+        end
+
+        it 'should not fail' do
+          expect { subject }.not_to raise_error
+        end
+      end
+
+      context 'when the symlink exists' do
+        before do
+          File.symlink('a_target', File.join(path, 'a_link'))
+        end
+
+        it 'should fail' do
+          expected_message = /expected symlink 'a_link' not to be found at '.*', but it exists/
+          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+        end
+      end
+    end
+
+    context 'when mixing positive and negative assertions' do
+      subject do
+        expect(tmpdir).to(
+          have_dir(expected_name) do
+            file 'good_file.txt'
+            no_file 'bad_file.txt'
+          end
+        )
+      end
+
+      context 'when all assertions are met' do
+        before do
+          File.write(File.join(path, 'good_file.txt'), 'content')
+        end
+
+        it 'should not fail' do
+          expect { subject }.not_to raise_error
+        end
+      end
+
+      context 'when a positive assertion fails' do
+        # 'good_file.txt' is not created
+        it 'should fail' do
+          expected_message = /expected it to exist/
+          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+        end
+      end
+
+      context 'when a negative assertion fails' do
+        before do
+          File.write(File.join(path, 'good_file.txt'), 'content')
+          File.write(File.join(path, 'bad_file.txt'), 'i should not be here')
+        end
+
+        it 'should fail' do
+          expected_message = /expected file 'bad_file\.txt' not to be found at '.*', but it exists/
+          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+        end
+      end
+    end
+  end
 end
