@@ -16,6 +16,11 @@ RSpec.describe 'have_dir.description' do
     it { is_expected.to eq('have directory "my_dir" with mode "0755" and owner "dev"') }
   end
 
+  context 'with the exact option' do
+    let(:matcher) { have_dir('my_dir', exact: true) }
+    it { is_expected.to eq('have directory "my_dir" exactly') }
+  end
+
   context 'with one nested matcher' do
     let(:matcher) do
       have_dir('my_dir') do

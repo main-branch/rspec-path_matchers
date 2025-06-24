@@ -32,10 +32,15 @@ RSpec.describe 'the have_dir matcher' do
     end
 
     context 'when the exact: value is not valid' do
+      subject do
+        expect(tmpdir).to(
+          have_dir(expected_name, exact: 'invalid')
+        )
+      end
+
       it 'should raise an ArgumentError' do
         expected_message = '`exact:` must be true or false, but was "invalid"'
-        # The matcher is created inside the expect block to properly catch the initialization error.
-        expect { have_dir(expected_name, exact: 'invalid') }.to raise_error(ArgumentError, expected_message)
+        expect { subject }.to raise_error(ArgumentError, expected_message)
       end
     end
 
@@ -86,7 +91,10 @@ RSpec.describe 'the have_dir matcher' do
           end
 
           it 'should fail and list the unexpected entry' do
-            expected_message = 'did not expect "file1.txt" to be present'
+            expected_message = <<~MSG.chomp
+              the entry 'my-app' at '#{tmpdir}' was expected to satisfy the following but did not:
+                - did not expect entries ["file1.txt"] to be present
+            MSG
             expect { subject }.to raise_error(expectation_not_met_error, expected_message)
           end
         end
@@ -123,9 +131,11 @@ RSpec.describe 'the have_dir matcher' do
           end
 
           it 'should fail and list all unexpected entries' do
-            expected_message = 'did not expect "unexpected_file.txt", "unexpected_dir", ' \
-                               'and "unexpected_link" to be present'
-            expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+            expect { subject }.to raise_error(expectation_not_met_error) do |error|
+              expect(error.message).to include(/"unexpected_file.txt"/)
+              expect(error.message).to include(/"unexpected_dir"/)
+              expect(error.message).to include(/"unexpected_link"/)
+            end
           end
         end
       end

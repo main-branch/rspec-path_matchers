@@ -48,9 +48,7 @@ module RSpec
         end
 
         def collect_negative_validation_errors(errors)
-          return unless options.to_h.values.any? { |v| v != RSpec::FileSystem::Options::NOT_GIVEN }
-
-          errors << "The matcher `not_to #{matcher_name}(...)` cannot be given options"
+          errors << "The matcher `not_to #{matcher_name}(...)` cannot be given options" if options.any_given?
         end
 
         # This method is called by RSpec for `expect(...).not_to have_...`
@@ -72,8 +70,6 @@ module RSpec
 
         # This is the message RSpec will display if `does_not_match?` returns `false`.
         def failure_message_when_negated
-          # This will read nicely, e.g.:
-          # "expected '/tmp' not to have file "foo.txt""
           "expected it not to be a #{entry_type}"
         end
 
@@ -94,8 +90,13 @@ module RSpec
 
         def failure_message
           header = "the entry '#{name}' at '#{base_path}' was expected to satisfy the following but did not:"
-          messages = failure_messages.map { |msg| "  - #{msg.gsub(/^/, '  ')}" }.join("\n")
-          "#{header}\n#{messages.sub('  ', '')}"
+          # Format single- and multi-line nested messages with proper indentation.
+          messages = failure_messages.map do |msg|
+            msg.lines.map.with_index do |line, i|
+              i.zero? ? "  - #{line.chomp}" : "    #{line.chomp}"
+            end.join("\n")
+          end.join("\n")
+          "#{header}\n#{messages}"
         end
 
         def correct_type?
@@ -149,6 +150,10 @@ module RSpec
               defaults = self.class.members.to_h { |member| [member, RSpec::FileSystem::Options::NOT_GIVEN] }
               final_args = defaults.merge(kwargs)
               super(**final_args)
+            end
+
+            def any_given?
+              to_h.values.any? { |v| v != RSpec::FileSystem::Options::NOT_GIVEN }
             end
           end.new(**options_hash)
         end
