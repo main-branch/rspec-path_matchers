@@ -100,7 +100,7 @@ RSpec.describe 'the have_dir matcher' do
   end
 
   describe 'not_to have_dir' do
-    context 'with no options and no block' do
+    context 'with no options and no specification block' do
       subject { expect(tmpdir).not_to have_dir(expected_name) }
 
       context 'when the entry at the given path does not exist' do
@@ -111,7 +111,7 @@ RSpec.describe 'the have_dir matcher' do
       end
 
       context 'when the entry at the given path is a directory' do
-        # The outer `before` block already creates the directory `path`
+        # The outer `before` specification block already creates the directory `path`
         it 'should fail' do
           expected_message = /expected it not to be a directory/
           expect { subject }.to raise_error(expectation_not_met_error, expected_message)
@@ -172,13 +172,13 @@ RSpec.describe 'the have_dir matcher' do
       end
     end
 
-    context 'with a block' do
+    context 'with a specification block' do
       subject do
         expect(tmpdir).not_to(have_dir(expected_name) { file('asdf') })
       end
 
       it 'should raise an ArgumentError' do
-        expected_message = 'The matcher `not_to have_dir(...)` cannot be given a block'
+        expected_message = 'The matcher `not_to have_dir(...)` cannot be given a specification block'
         expect { subject }.to raise_error(ArgumentError, expected_message)
       end
     end
@@ -848,11 +848,11 @@ RSpec.describe 'the have_dir matcher' do
       end
     end
 
-    context 'when given a block' do
-      context 'with an empty block' do
+    context 'when given a specification block' do
+      context 'with an empty specification block' do
         subject do
           expect(tmpdir).to(
-            have_dir(expected_name) do # rubocop:disable Lint/EmptyBlock
+            have_dir(expected_name) do
               # No expectations in the block
             end
           )
@@ -863,7 +863,7 @@ RSpec.describe 'the have_dir matcher' do
         end
       end
 
-      context 'with a block checking for a file' do
+      context 'with a specification block checking for a file' do
         let(:subject) do
           expect(tmpdir).to(
             have_dir(expected_name) do
@@ -872,7 +872,7 @@ RSpec.describe 'the have_dir matcher' do
           )
         end
 
-        context 'when the block expectations are met' do
+        context 'when the specification block expectations are met' do
           before do
             File.write(File.join(path, 'file.json'), '{"key": "value"}')
           end
@@ -882,7 +882,7 @@ RSpec.describe 'the have_dir matcher' do
           end
         end
 
-        context 'when the block expectations are not met' do
+        context 'when the specification block expectations are not met' do
           before do
             File.write(File.join(path, 'file.json'), 'not a json file')
           end
@@ -894,7 +894,7 @@ RSpec.describe 'the have_dir matcher' do
         end
       end
 
-      context 'with a block checking for a directory' do
+      context 'with a specification specification block checking for a directory' do
         let(:subject) do
           expect(tmpdir).to(
             have_dir(expected_name) do
@@ -903,7 +903,7 @@ RSpec.describe 'the have_dir matcher' do
           )
         end
 
-        context 'when the block expectations are met' do
+        context 'when the specification block expectations are met' do
           before do
             nested_path = File.join(path, 'nested_dir')
             Dir.mkdir(nested_path)
@@ -914,7 +914,7 @@ RSpec.describe 'the have_dir matcher' do
           end
         end
 
-        context 'when the block expectations are not met' do
+        context 'when the specification block expectations are not met' do
           it 'should fail' do
             expected_message = /expected it to exist/
             expect { subject }.to raise_error(expectation_not_met_error, expected_message)
@@ -922,7 +922,7 @@ RSpec.describe 'the have_dir matcher' do
         end
       end
 
-      context 'with a block checking for a symlink' do
+      context 'with a specification block checking for a symlink' do
         let(:subject) do
           expect(tmpdir).to(
             have_dir(expected_name) do
@@ -931,7 +931,7 @@ RSpec.describe 'the have_dir matcher' do
           )
         end
 
-        context 'when the block expectations are met' do
+        context 'when the specification block expectations are met' do
           before do
             File.symlink('expected_target', File.join(path, 'nested_symlink'))
           end
@@ -941,7 +941,7 @@ RSpec.describe 'the have_dir matcher' do
           end
         end
 
-        context 'when the block expectations are not met' do
+        context 'when the specification block expectations are not met' do
           it 'should fail' do
             expected_message = /expected it to exist/
             expect { subject }.to raise_error(expectation_not_met_error, expected_message)
@@ -949,7 +949,7 @@ RSpec.describe 'the have_dir matcher' do
         end
       end
 
-      context 'with a block checking for multiple files' do
+      context 'with a specification block checking for multiple files' do
         let(:subject) do
           expect(tmpdir).to(
             have_dir(expected_name) do
@@ -959,7 +959,7 @@ RSpec.describe 'the have_dir matcher' do
           )
         end
 
-        context 'when the block expectations are met' do
+        context 'when the specification block expectations are met' do
           before do
             File.write(File.join(path, 'file1.txt'), 'content1')
             File.write(File.join(path, 'file2.txt'), 'content2')
@@ -970,7 +970,7 @@ RSpec.describe 'the have_dir matcher' do
           end
         end
 
-        context 'when the block expectations are not met' do
+        context 'when the specification block expectations are not met' do
           before do
             File.write(File.join(path, 'file1.txt'), 'wrong content')
           end
@@ -982,7 +982,7 @@ RSpec.describe 'the have_dir matcher' do
         end
       end
 
-      context 'with a block checking for a directory with another block' do
+      context 'with a specification block checking for a directory with another specification block' do
         let(:subject) do
           expect(tmpdir).to(
             have_dir(expected_name) do
@@ -993,7 +993,7 @@ RSpec.describe 'the have_dir matcher' do
           )
         end
 
-        context 'when the block expectations are met' do
+        context 'when the specification block expectations are met' do
           before do
             nested_path = File.join(path, 'nested_dir')
             Dir.mkdir(nested_path)
@@ -1005,7 +1005,7 @@ RSpec.describe 'the have_dir matcher' do
           end
         end
 
-        context 'when the block expectations are not met' do
+        context 'when the specification block expectations are not met' do
           before do
             nested_path = File.join(path, 'nested_dir')
             Dir.mkdir(nested_path)
@@ -1021,7 +1021,7 @@ RSpec.describe 'the have_dir matcher' do
     end
   end
 
-  context 'with negative assertions in the block' do
+  context 'with negative assertions in the specification block' do
     describe 'the no_file method' do
       subject do
         expect(tmpdir).to(

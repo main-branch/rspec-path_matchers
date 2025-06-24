@@ -21,13 +21,13 @@ module RSpec
 
         attr_reader :nested_matchers
 
-        def initialize(name, **options_hash, &block)
+        def initialize(name, **options_hash, &specification_block)
           super(name, **options_hash)
           @nested_matchers = []
-          return unless block
+          return unless specification_block
 
           inspector = DirectoryContentsInspector.new
-          inspector.instance_eval(&block)
+          inspector.instance_eval(&specification_block)
           @nested_matchers = inspector.nested_matchers
         end
 
@@ -58,7 +58,7 @@ module RSpec
 
           return unless nested_matchers.any?
 
-          errors << 'The matcher `not_to have_dir(...)` cannot be given a block'
+          errors << 'The matcher `not_to have_dir(...)` cannot be given a specification block'
         end
 
         def option_definitions = OPTIONS
