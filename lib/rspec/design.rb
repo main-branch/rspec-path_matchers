@@ -7,7 +7,7 @@ expect(path).to have_file(
 )
 
 expect(path).to have_dir(
-  name, entry_count:, mode:, owner:, group:, ctime:, mtime:, exclusive:
+  name, entry_count:, mode:, owner:, group:, ctime:, mtime:, exact:
 )
 
 expect(path).to have_symlink(

@@ -327,6 +327,36 @@ it "validates a nested directory structure" do
 end
 ```
 
+### Exact Directory Contents
+
+You can enforce that a directory contains *only* the entries defined in your
+specification block by using the `exact: true` option. This is perfect for testing
+generators or build scripts that should produce a clean, specific output without any
+extra files.
+
+If any undeclared entries are found on the filesystem, the matcher will fail.
+
+```ruby
+it "creates a directory with only the expected files" do
+  # Setup: Create a directory with an extra, unexpected file.
+  FileUtils.mkdir(File.join(@tmpdir, 'dist'))
+  File.write(File.join(@tmpdir, 'dist/app.js'), '// ...')
+  File.write(File.join(@tmpdir, 'dist/unexpected.log'), 'debug info')
+
+  # This test will fail because 'unexpected.log' was not declared.
+  expect(@tmpdir).to(
+    have_dir('dist', exact: true) do
+      file 'app.js'
+    end
+  )
+end
+
+# Failure Message:
+#
+# the entry 'dist' at '...' was expected to satisfy the following but did not:
+#   - did not expect entries ["unexpected.log"] to be present
+```
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake
