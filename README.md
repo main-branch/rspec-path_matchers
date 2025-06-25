@@ -280,7 +280,7 @@ expect(path).to have_dir(
 )
 
 expect(path).to have_symlink(
-  name, mode:, owner:, group:, ctime:, mtime:, target:, target_type:, dangling:
+  name, mode:, owner:, group:, ctime:, mtime:, target:, target_type:, target_exist:
 )
 ```
 

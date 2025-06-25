@@ -5,7 +5,7 @@ module RSpec
     module Options
       # target_exist: <expected>
       class SymlinkTargetExist
-        def self.key = :target_exist?
+        def self.key = :target_exist
 
         def self.description(expected)
           RSpec::PathMatchers.matcher?(expected) ? expected.description : expected.to_s
