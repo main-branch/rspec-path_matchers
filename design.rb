@@ -11,7 +11,7 @@ expect(path).to have_dir(
 )
 
 expect(path).to have_symlink(
-  name, mode:, owner:, group:, ctime:, mtime:, target:, target_type:, dangling:
+  name, mode:, owner:, group:, ctime:, mtime:, target:, target_type:, target_exist:
 )
 
 ########################################
@@ -73,4 +73,4 @@ expect(path).to have_symlink(name, mtime: timestamp_matcher) # ...the symlink mo
 
 expect(path).to have_symlink(name, target: target_matcher) # ...the symlink target as a String
 expect(path).to have_symlink(name, target_type: target_type)
-expect(path).to have_symlink(name, target_exist?: boolean) # Assert whether the symlink is dangling or not
+expect(path).to have_symlink(name, target_exist: boolean) # Assert whether the symlink is target_exist or not

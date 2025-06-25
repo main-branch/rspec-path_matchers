@@ -863,13 +863,13 @@ RSpec.describe 'the have_symlink matcher' do
   end
 
   describe 'the target_exist: option' do
-    subject { expect(tmpdir).to have_symlink(expected_name, target_exist?: expected_target_exist) }
+    subject { expect(tmpdir).to have_symlink(expected_name, target_exist: expected_target_exist) }
 
     context 'when the expected target exist is not valid' do
       let(:expected_target_exist) { 123 }
 
       it 'should raise an ArgumentError' do
-        expected_message = /expected `target_exist\?:` to be a Matcher, true, or false but was 123/
+        expected_message = /expected `target_exist:` to be a Matcher, true, or false but was 123/
         expect { subject }.to raise_error(ArgumentError, expected_message)
       end
     end
@@ -888,7 +888,7 @@ RSpec.describe 'the have_symlink matcher' do
       context 'when the expected target type does not match the actual target type' do
         it 'should fail' do
           FileUtils.rm_rf(target_path)
-          expected_message = /expected target_exist\? to be true, but was false/
+          expected_message = /expected target_exist to be true, but was false/
           expect { subject }.to raise_error(expectation_not_met_error, expected_message)
         end
       end
@@ -908,7 +908,7 @@ RSpec.describe 'the have_symlink matcher' do
       context 'when the expected target type does not match the actual target type' do
         it 'should fail' do
           FileUtils.rm_rf(target_path)
-          expected_message = /expected target_exist\? to equal true, but was false/
+          expected_message = /expected target_exist to equal true, but was false/
           expect { subject }.to raise_error(expectation_not_met_error, expected_message)
         end
       end
