@@ -8,10 +8,10 @@ Gem::Specification.new do |spec|
   spec.authors = ['James Couball']
   spec.email = ['jcouball@yahoo.com']
 
-  spec.summary = 'A comprehensive RSpec matcher suite for testing directory structures.'
+  spec.summary = 'A comprehensive RSpec matcher suite for testing file system entries and structures'
   spec.description = <<~DESCRIPTION
-    Provides a rich, fluent DSL for RSpec to assert on files, directories,
-    symlinks, permissions, content (including JSON), and more. Ideal for
+    Provides a rich DSL for RSpec to assert on files, directories, and
+    symlinks, including permissions, content (including JSON), and more. Ideal for
     testing generators and build scripts.
   DESCRIPTION
 

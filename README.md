@@ -7,8 +7,24 @@ Status](https://img.shields.io/github/actions/workflow/status/main-branch/rspec-
 [![MIT
 License](https://img.shields.io/badge/license-MIT-green)](https://opensource.org/licenses/MIT)
 
-**RSpec::PathMatchers** provides a rich and comprehensive suite of RSpec matchers for
-testing directory structures.
+- [Summary](#summary)
+- [Installation](#installation)
+- [Setup](#setup)
+- [Usage \& Examples](#usage--examples)
+  - [Basic Assertions](#basic-assertions)
+  - [Negative Assertions (Checking for Absence)](#negative-assertions-checking-for-absence)
+  - [File Content Assertions](#file-content-assertions)
+  - [Attribute Assertions](#attribute-assertions)
+  - [Directory Structure Assertions](#directory-structure-assertions)
+  - [Exact Directory Contents](#exact-directory-contents)
+- [Development](#development)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Summary
+
+**RSpec::PathMatchers** provides a comprehensive suite of RSpec matchers for
+testing file system entries and structures.
 
 Verifying that a generator, build script, or any file-manipulating process has
 produced the correct output can be tedious and verbose. This gem makes those
@@ -18,120 +34,120 @@ file tree and its properties within your specs.
 Here’s a breakdown of the value this API provides over what is available in standard
 RSpec.
 
-### 1. Abstraction and Readability: From Imperative to Declarative
+<h3>1. Abstraction and Readability: From Imperative to Declarative</h3>
 
-    Standard RSpec forces you to describe *how* to test something. This API allows you
-    to declaratively state *what* the directory structure should look like.
+Standard RSpec forces you to describe *how* to test something. This API allows you
+to declaratively state *what* the directory structure should look like.
 
-    Without this API (Imperative Style):
+Without this API (Imperative Style):
 
-    ```ruby
-    # This code describes the HOW: stat the file, get the mode, convert to octal...
-    # It's a script, not a specification.
-    path = '/var/www/html/index.html'
-    expect(File.exist?(path)).to be true
-    expect(File.stat(path).mode.to_s(8)[-4..]).to eq('0644')
-    expect(File.stat(path).owned?).to be true # This just checks if UID matches script runner
-    ```
+```ruby
+# This code describes the HOW: stat the file, get the mode, convert to octal...
+# It's a script, not a specification.
+path = '/var/www/html/index.html'
+expect(File.exist?(path)).to be true
+expect(File.stat(path).mode.to_s(8)[-4..]).to eq('0644')
+expect(File.stat(path).owned?).to be true # This just checks if UID matches script runner
+```
 
-    With this API (Declarative Style):
+With this API (Declarative Style):
 
-    ```ruby
-    # This code describes the WHAT. The implementation details are hidden.
-    # It reads like a specification document.
-    expect('/var/www/html').to have_file('index.html', mode: '0644', owner: 'httpd')
-    ```
+```ruby
+# This code describes the WHAT. The implementation details are hidden.
+# It reads like a specification document.
+expect('/var/www/html').to have_file('index.html', mode: '0644', owner: 'httpd')
+```
 
-    This hides the complex, imperative logic inside the matcher and exposes a clean,
-    readable, domain-specific language (DSL).
+This hides the complex, imperative logic inside the matcher and exposes a clean,
+readable, domain-specific language (DSL).
 
-### 2. Conciseness and Cohesion: Grouping Related Assertions
+<h3>2. Conciseness and Cohesion: Grouping Related Assertions</h3>
 
-    Without this API, testing multiple attributes of a single file requires
-    fragmented, repetitive `expect` calls. Your API groups these assertions into one
-    cohesive, logical block.
+Without this API, testing multiple attributes of a single file requires
+fragmented, repetitive `expect` calls. Your API groups these assertions into one
+cohesive, logical block.
 
-    Without this API:
+Without this API:
 
-    ```ruby
-    path = '/var/data/status.json'
-    expect(File.file?(path)).to be true
-    expect(File.size(path)).to be > 0
-    expect(File.read(path)).not_to include('error')
-    expect(JSON.parse(File.read(path))['status']).to eq('complete')
-    ```
+```ruby
+path = '/var/data/status.json'
+expect(File.file?(path)).to be true
+expect(File.size(path)).to be > 0
+expect(File.read(path)).not_to include('error')
+expect(JSON.parse(File.read(path))['status']).to eq('complete')
+```
 
-    With this API:
+With this API:
 
-    ```ruby
-    expect('/var/data').to have_file('status.json',
-      size: be > 0,
-      content: not(/error/),
-      json_content: include('status' => 'complete')
-    )
-    ```
+```ruby
+expect('/var/data').to have_file('status.json',
+    size: be > 0,
+    content: not(/error/),
+    json_content: include('status' => 'complete')
+)
+```
 
-    This is far easier to read and maintain because all the assertions about
-    `status.json` are in one place.
+This is far easier to read and maintain because all the assertions about
+`status.json` are in one place.
 
-### 3. The Nested Directory DSL Adds to the Expressive Power
+<h3>3. The Nested Directory DSL Adds to the Expressive Power</h3>
 
-    This is where this API provides something that base RSpec simply cannot do
-    elegantly. Describing the state of a directory tree with standard RSpec is
-    incredibly verbose and difficult to read.
+This is where this API provides something that base RSpec simply cannot do
+elegantly. Describing the state of a directory tree with standard RSpec is
+incredibly verbose and difficult to read.
 
-    Without this API:
+Without this API:
 
-    ```ruby
-    # This is hard to read and mentally parse.
-    dir_path = '/etc/service/nginx'
-    expect(Dir.exist?(dir_path)).to be true
-    expect(File.exist?(File.join(dir_path, 'run'))).to be true
-    expect(Dir.exist?(File.join(dir_path, 'log'))).to be true
-    expect(File.exist?(File.join(dir_path, 'down'))).to be false
-    ```
+```ruby
+# This is hard to read and mentally parse.
+dir_path = '/etc/service/nginx'
+expect(Dir.exist?(dir_path)).to be true
+expect(File.exist?(File.join(dir_path, 'run'))).to be true
+expect(Dir.exist?(File.join(dir_path, 'log'))).to be true
+expect(File.exist?(File.join(dir_path, 'down'))).to be false
+```
 
-    With this API:
+With this API:
 
-    ```ruby
-    # This is a clear, hierarchical specification of the directory's contents.
-    expect('/etc/service').to(have_dir('nginx') do
-      file('run')
-      dir('log')
-      no_file('down')
-    end)
-    ```
+```ruby
+# This is a clear, hierarchical specification of the directory's contents.
+expect('/etc/service').to(have_dir('nginx') do
+    file('run')
+    dir('log')
+    no_file('down')
+end)
+```
 
-    The nested block is a leap in expressiveness and power, allowing you to write
-    complex integration and infrastructure tests with ease.
+The nested block is a leap in expressiveness and power, allowing you to write
+complex integration and infrastructure tests with ease.
 
-### 4. Descriptive and Intelligible Failure Messages
+<h3>4. Descriptive and Intelligible Failure Messages</h3>
 
-    When a complex, nested expectation fails, this gem pinpoints the exact failure,
-    saving you valuable debugging time.
+When a complex, nested expectation fails, this gem pinpoints the exact failure,
+saving you valuable debugging time.
 
-    **Standard RSpec Failure:**
+**Standard RSpec Failure:**
 
-    ```
-    expected: true
-         got: false
-    ```
+```
+expected: true
+        got: false
+```
 
-    This kind of message forces you to manually inspect the directory structure to understand
-    what went wrong.
+This kind of message forces you to manually inspect the directory structure to understand
+what went wrong.
 
-    **With this API:**
+**With this API:**
 
-    You get a detailed, hierarchical report that shows the full expectation and
-    clearly marks what failed.
+You get a detailed, hierarchical report that shows the full expectation and
+clearly marks what failed.
 
-    ```
-    the entry 'my-app' at '/tmp/d20250622-12345-abcdef' was expected to satisfy the following but did not:
-    - have directory "config" containing:
-      - have file "database.yml" with owner "db_user" and mode "0600"
-        - expected owner to be "db_user", but was "root"
-        - expected mode to be "0600", but was "0644"
-    ```
+```
+the entry 'my-app' at '/tmp/d20250622-12345-abcdef' was expected to satisfy the following but did not:
+- have directory "config" containing:
+    - have file "database.yml" with owner "db_user" and mode "0600"
+    - expected owner to be "db_user", but was "root"
+    - expected mode to be "0600", but was "0644"
+```
 
 ## Installation
 
@@ -251,8 +267,24 @@ end
 
 ### Attribute Assertions
 
-You can chain assertions to verify file metadata like permissions, ownership, size,
-and symlinks.
+Matcher options allow detailed expectations on files, directories, and symlinks. Here
+are the options available on the three top level matchers:
+
+```text
+expect(path).to have_file(
+  name, mode:, owner:, group:, ctime:, mtime:, size:, content:, json_content:, yaml_content:,
+)
+
+expect(path).to have_dir(
+  name, mode:, owner:, group:, ctime:, mtime:, exact:
+)
+
+expect(path).to have_symlink(
+  name, mode:, owner:, group:, ctime:, mtime:, target:, target_type:, dangling:
+)
+```
+
+Here is a detailed example of using options:
 
 ```ruby
 before do
