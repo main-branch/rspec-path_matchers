@@ -1,5 +1,17 @@
 ## [Unreleased]
 
+## [0.1.1](https://github.com/main-branch/rspec-path_matchers/compare/v0.1.0...v0.1.1) (2025-06-25)
+
+
+### Bug Fixes
+
+* Rename the `target_exist?` option to `target_exist` ([8c77c08](https://github.com/main-branch/rspec-path_matchers/commit/8c77c08736d90cacfb4c8248d15f57eee8774a43))
+
+
+### Other Changes
+
+* Rename the project gemspec to match the gem name ([ece0738](https://github.com/main-branch/rspec-path_matchers/commit/ece07380fa1ae085a5a4a8c24a50c05978a16f76))
+
 ## 0.1.0 (2025-06-25)
 
 
