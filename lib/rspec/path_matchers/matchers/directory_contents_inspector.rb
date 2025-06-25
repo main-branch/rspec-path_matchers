@@ -23,8 +23,8 @@ module RSpec
         attr_reader :nested_matchers
 
         # Defines an expectation for a file within the directory.
-        def file(name, **options)
-          nested_matchers << RSpec::PathMatchers::Matchers::HaveFile.new(name, **options)
+        def file(name, **)
+          nested_matchers << RSpec::PathMatchers::Matchers::HaveFile.new(name, **)
         end
 
         # Defines an expectation for a nested directory.
@@ -33,8 +33,8 @@ module RSpec
         end
 
         # Defines an expectation for a symlink within the directory.
-        def symlink(name, **options)
-          nested_matchers << RSpec::PathMatchers::Matchers::HaveSymlink.new(name, **options)
+        def symlink(name, **)
+          nested_matchers << RSpec::PathMatchers::Matchers::HaveSymlink.new(name, **)
         end
 
         # Defines an expectation that a file does NOT exist within the directory.
