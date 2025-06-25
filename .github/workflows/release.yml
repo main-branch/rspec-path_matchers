@@ -20,7 +20,7 @@ jobs:
 
     environment:
       name: RubyGems
-      url: https://rubygems.org/gems/ruby_git
+      url: https://rubygems.org/gems/rspec-path_matchers
 
     permissions:
       contents: write
