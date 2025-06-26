@@ -1,62 +1,16 @@
 # frozen_string_literal: true
 
+require_relative 'etc_base'
+
 module RSpec
   module PathMatchers
     module Options
-      # owner: <expected>
-      class SymlinkOwner
+      # group: <expected>
+      class SymlinkOwner < EtcBase
         def self.key = :owner
-
-        def self.description(expected)
-          RSpec::PathMatchers.matcher?(expected) ? expected.description : expected.inspect
-        end
-
-        def self.validate_expected(expected, failure_messages)
-          return if expected == NOT_GIVEN ||
-                    expected.is_a?(String) ||
-                    RSpec::PathMatchers.matcher?(expected)
-
-          failure_messages <<
-            "expected `#{key}:` to be a Matcher or a String, but was #{expected.inspect}"
-        end
-
-        # Returns nil if the path is owned by the expected owner
-        # @param path [String] the path of the entry to check
-        # @return [String, nil]
-        #
-        def self.match(path, expected, failure_messages)
-          return if unsupported_platform?
-
-          actual = Etc.getpwuid(File.lstat(path).uid).name
-
-          case expected
-          when String then match_string(actual, expected, failure_messages)
-          else             match_matcher(actual, expected, failure_messages)
-          end
-        end
-
-        # private methods
-
-        private_class_method def self.unsupported_platform?
-          return false if Etc.respond_to?(:getpwuid)
-
-          # If the platform doesn't support ownership, warn the user and skip the check
-          message = 'WARNING: Owner expectations are not supported on this platform and will be skipped.'
-          RSpec.configuration.reporter.message(message)
-          true
-        end
-
-        private_class_method def self.match_string(actual, expected, failure_messages)
-          return if expected == actual
-
-          failure_messages << "expected owner to be #{expected.inspect}, but was #{actual.inspect}"
-        end
-
-        private_class_method def self.match_matcher(actual, expected, failure_messages)
-          return if expected.matches?(actual)
-
-          failure_messages << "expected owner to #{expected.description}, but was #{actual.inspect}"
-        end
+        def self.stat_source_method = :lstat
+        def self.stat_attribute = :uid
+        def self.etc_method = :getpwuid
       end
     end
   end

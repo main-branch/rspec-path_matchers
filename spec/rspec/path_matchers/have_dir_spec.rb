@@ -4,7 +4,7 @@ require 'date'
 require 'fileutils'
 require 'tmpdir'
 
-RSpec.describe 'the have_symlink matcher' do
+RSpec.describe 'the have_dir matcher' do
   let(:now) { Time.new(1967, 3, 15, 0, 16, 0, '-0700') }
 
   around(:each) do |example|
@@ -15,20 +15,23 @@ RSpec.describe 'the have_symlink matcher' do
   end
 
   let(:tmpdir) { @tmpdir }
-  let(:expected_name) { 'file.txt' }
+  let(:expected_name) { 'dir' }
   let(:path) { File.join(tmpdir, expected_name) }
-  let(:target_path) { File.join(tmpdir, 'target') }
 
   let(:expectation_not_met_error) { RSpec::Expectations::ExpectationNotMetError }
 
   before do
-    File.symlink(target_path, path)
+    Dir.mkdir(path)
   end
 
   describe 'checking existance' do
-    subject { expect(tmpdir).to have_symlink(expected_name) }
+    subject { expect(tmpdir).to have_dir(expected_name) }
 
-    context 'when the entry at the given path is a symlink' do
+    context 'when the entry at the given path is a regular file' do
+      before do
+        FileUtils.touch(File.join(tmpdir, expected_name))
+      end
+
       it 'should not fail' do
         expect { subject }.not_to raise_error
       end
@@ -36,7 +39,57 @@ RSpec.describe 'the have_symlink matcher' do
 
     context 'when the entry at the given path does not exist' do
       before do
-        FileUtils.rm(path)
+        FileUtils.rm_rf(path)
+      end
+      it 'should fail' do
+        expected_message = /expected it to exist/
+        expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+      end
+    end
+
+    context 'when the entry at the given path is not a directory' do
+      before do
+        FileUtils.rm_rf(path)
+        File.write(path, 'not a directory')
+      end
+
+      it 'should fail' do
+        expected_message = /expected it to be a directory/
+        expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+      end
+    end
+
+    context 'when the entry at the given path is a symlink to a directory' do
+      before do
+        FileUtils.rm_rf(path)
+        Dir.mkdir(File.join(tmpdir, 'target_dir'))
+        File.symlink('target_dir', path)
+      end
+
+      it 'should not fail' do
+        expect { subject }.not_to raise_error
+      end
+    end
+
+    context 'when the entry at the given path is a symlink to a regular file' do
+      before do
+        FileUtils.rm_rf(path)
+        file_path = File.join(tmpdir, 'target_file.txt')
+        File.write(file_path, 'regular file')
+        File.symlink(file_path, path)
+      end
+
+      it 'should fail' do
+        expected_message = /expected it to be a directory/
+        expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+      end
+    end
+
+    context 'when the entry at the given path is a dangling symlink' do
+      before do
+        FileUtils.rm_rf(path)
+        target_path = File.join(tmpdir, 'target.txt')
+        File.symlink(target_path, File.join(tmpdir, 'link.txt'))
       end
 
       it 'should fail' do
@@ -44,23 +97,11 @@ RSpec.describe 'the have_symlink matcher' do
         expect { subject }.to raise_error(expectation_not_met_error, expected_message)
       end
     end
-
-    context 'when the entry at the given path is not a symlink' do
-      before do
-        FileUtils.rm(path)
-        FileUtils.touch(path) # Create a regular file
-      end
-
-      it 'should fail' do
-        expected_message = /expected it to be a symlink/
-        expect { subject }.to raise_error(expectation_not_met_error, expected_message)
-      end
-    end
   end
 
-  describe 'not_to have_symlink' do
-    context 'with no options and no block' do
-      subject { expect(tmpdir).not_to have_symlink(expected_name) }
+  describe 'not_to have_dir' do
+    context 'with no options and no specification block' do
+      subject { expect(tmpdir).not_to have_dir(expected_name) }
 
       context 'when the entry at the given path does not exist' do
         before { FileUtils.rm_rf(path) }
@@ -70,13 +111,10 @@ RSpec.describe 'the have_symlink matcher' do
       end
 
       context 'when the entry at the given path is a directory' do
-        before do
-          FileUtils.rm_rf(path)
-          Dir.mkdir(path)
-        end
-
-        it 'should not fail' do
-          expect { subject }.not_to raise_error
+        # The outer `before` specification block already creates the directory `path`
+        it 'should fail' do
+          expected_message = /expected it not to be a directory/
+          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
         end
       end
 
@@ -92,12 +130,16 @@ RSpec.describe 'the have_symlink matcher' do
       end
 
       context 'when the entry at the given path is a symlink to a directory' do
+        let(:target_dir) { File.join(tmpdir, 'target_dir') }
+
         before do
-          Dir.mkdir(target_path)
+          FileUtils.rm_rf(path)
+          Dir.mkdir(target_dir)
+          File.symlink(target_dir, path)
         end
 
         it 'should fail' do
-          expected_message = /expected it not to be a symlink/
+          expected_message = /expected it not to be a directory/
           expect { subject }.to raise_error(expectation_not_met_error, expected_message)
         end
       end
@@ -106,32 +148,46 @@ RSpec.describe 'the have_symlink matcher' do
         let(:target_file) { File.join(tmpdir, 'target_file.txt') }
 
         before do
-          File.write(target_path, 'I am a file')
+          FileUtils.rm_rf(path)
+          File.write(target_file, 'I am a file')
+          File.symlink(target_file, path)
         end
 
-        it 'should fail' do
-          expected_message = /expected it not to be a symlink/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+        it 'should not fail' do
+          expect { subject }.not_to raise_error
         end
       end
 
       context 'when the entry at the given path is a dangling symlink' do
         let(:dangling_target) { File.join(tmpdir, 'non_existent_target') }
 
-        # The top level `before` block creates a dangling symlink
+        before do
+          FileUtils.rm_rf(path)
+          File.symlink(dangling_target, path)
+        end
 
-        it 'should fail' do
-          expected_message = /expected it not to be a symlink/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+        it 'should not fail' do
+          expect { subject }.not_to raise_error
         end
       end
     end
 
-    context 'with any options' do
-      subject { expect(tmpdir).not_to have_symlink(expected_name, owner: 'root') }
+    context 'with a specification block' do
+      subject do
+        expect(tmpdir).not_to(have_dir(expected_name) { file('asdf') })
+      end
 
       it 'should raise an ArgumentError' do
-        expected_message = 'The matcher `not_to have_symlink(...)` cannot be given options'
+        expected_message = 'The matcher `not_to have_dir(...)` cannot be given a specification block'
+        expect { subject }.to raise_error(ArgumentError, expected_message)
+      end
+    end
+
+    context 'with any options' do
+      subject { expect(tmpdir).not_to have_dir(expected_name, mode: '0755') }
+
+      it 'should raise an ArgumentError' do
+        expected_message = 'The matcher `not_to have_dir(...)` cannot be given options'
         expect { subject }.to raise_error(ArgumentError, expected_message)
       end
     end
@@ -142,7 +198,7 @@ RSpec.describe 'the have_symlink matcher' do
       FileUtils.touch(File.join(tmpdir, expected_name))
     end
 
-    subject { expect(tmpdir).to have_symlink(expected_name, **options) }
+    subject { expect(tmpdir).to have_dir(expected_name, **options) }
 
     context 'with an invalid option' do
       let(:options) { { invalid_option: true } }
@@ -161,12 +217,75 @@ RSpec.describe 'the have_symlink matcher' do
     end
   end
 
+  describe 'the mode: option' do
+    subject { expect(tmpdir).to have_dir(expected_name, mode: expected_mode) }
+
+    let(:path) { File.join(tmpdir, expected_name) }
+
+    context 'when the expected value is not valid' do
+      let(:expected_mode) { 123 }
+      it 'should raise an ArgumentError' do
+        expected_message = /expected `mode:` to be a Matcher or String, but was 123/
+        expect { subject }.to raise_error(ArgumentError, expected_message)
+      end
+    end
+
+    context 'when given a String' do
+      let(:expected_mode) { '0644' }
+
+      context 'when the expected mode matches the actual mode' do
+        let(:actual_mode) { expected_mode }
+        it 'should not fail' do
+          FileUtils.touch(path)
+          FileUtils.chmod(expected_mode.to_i(8), path)
+          expect { subject }.not_to raise_error
+        end
+      end
+
+      context 'when the expected mode does not match the actual mode' do
+        let(:actual_mode) { '0755' }
+        it 'should fail' do
+          FileUtils.touch(path)
+          FileUtils.chmod(actual_mode.to_i(8), path)
+          expected_message = /expected mode to be "0644", but was "0755"/
+          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+        end
+      end
+    end
+
+    context 'when given a matcher' do
+      let(:expected_mode) { match(/^07..$/) }
+
+      context 'when the expected mode matches the actual mode' do
+        let(:actual_mode) { '0755' }
+
+        it 'should not fail' do
+          FileUtils.touch(path)
+          FileUtils.chmod(actual_mode.to_i(8), path)
+          expect { subject }.not_to raise_error
+        end
+      end
+
+      context 'when the expected mode does not match the actual mode' do
+        let(:actual_mode) { '0600' }
+        it 'should fail' do
+          FileUtils.touch(path)
+          FileUtils.chmod(actual_mode.to_i(8), path)
+          expected_message = Regexp.escape('expected mode to match /^07..$/, but was "0600"')
+          expect { subject }.to raise_error(expectation_not_met_error, /#{expected_message}/)
+        end
+      end
+    end
+  end
+
   describe 'the owner: option' do
-    subject { expect(tmpdir).to have_symlink(expected_name, owner: expected_owner) }
+    subject { expect(tmpdir).to have_dir(expected_name, owner: expected_owner) }
+
+    let(:path) { File.join(tmpdir, expected_name) }
 
     def mock_owner(path, actual_owner)
       uid = 9999
-      allow(File).to receive(:lstat).with(path).and_return(double(uid: uid))
+      allow(File).to receive(:stat).with(path).and_return(double(uid: uid))
       allow(Etc).to receive(:getpwuid).and_return(double(name: actual_owner))
     end
 
@@ -174,7 +293,7 @@ RSpec.describe 'the have_symlink matcher' do
       let(:expected_owner) { 123 }
 
       it 'should raise an ArgumentError' do
-        expected_message = /expected `owner:` to be a Matcher or a String, but was 123/
+        expected_message = /expected `owner:` to be a Matcher or String, but was 123/
         expect { subject }.to raise_error(ArgumentError, expected_message)
       end
     end
@@ -189,7 +308,7 @@ RSpec.describe 'the have_symlink matcher' do
         FileUtils.touch(path)
 
         expect(RSpec.configuration.reporter).to receive(:message).with(
-          'WARNING: Owner expectations are not supported on this platform and will be skipped.'
+          'WARNING: owner expectations are not supported on this platform and will be skipped.'
         )
 
         expect { subject }.not_to raise_error
@@ -248,19 +367,21 @@ RSpec.describe 'the have_symlink matcher' do
   end
 
   describe 'the group: option' do
-    subject { expect(tmpdir).to have_symlink(expected_name, group: expected_group) }
+    subject { expect(tmpdir).to have_dir(expected_name, group: expected_group) }
+
+    let(:path) { File.join(tmpdir, expected_name) }
 
     # Etc.getgrgid(File.stat(path).gid).name
     def mock_group(path, name)
       gid = 9999
-      allow(File).to receive(:lstat).with(path).and_return(double(gid:))
+      allow(File).to receive(:stat).with(path).and_return(double(gid:))
       allow(Etc).to receive(:getgrgid).with(gid).and_return(double(name:))
     end
 
     context 'when given an invalid group value' do
       let(:expected_group) { 123 }
       it 'should raise an ArgumentError' do
-        expected_message = /expected `group:` to be a Matcher or a String, but was 123/
+        expected_message = /expected `group:` to be a Matcher or String, but was 123/
         expect { subject }.to raise_error(ArgumentError, expected_message)
       end
     end
@@ -275,7 +396,7 @@ RSpec.describe 'the have_symlink matcher' do
         FileUtils.touch(path)
 
         expect(RSpec.configuration.reporter).to receive(:message).with(
-          'WARNING: Group expectations are not supported on this platform and will be skipped.'
+          'WARNING: group expectations are not supported on this platform and will be skipped.'
         )
 
         expect { subject }.not_to raise_error
@@ -289,6 +410,7 @@ RSpec.describe 'the have_symlink matcher' do
         let(:actual_group) { expected_group }
 
         it 'should not fail' do
+          FileUtils.touch(path)
           mock_group(path, actual_group)
           expect { subject }.not_to raise_error
         end
@@ -333,10 +455,12 @@ RSpec.describe 'the have_symlink matcher' do
   end
 
   describe 'the atime: option' do
-    subject { expect(tmpdir).to have_symlink(expected_name, atime: expected_atime) }
+    subject { expect(tmpdir).to have_dir(expected_name, atime: expected_atime) }
+
+    let(:path) { File.join(tmpdir, expected_name) }
 
     def mock_atime(path, actual_atime)
-      allow(File).to receive(:lstat).with(path).and_return(double(atime: actual_atime))
+      allow(File).to receive(:stat).with(path).and_return(double(atime: actual_atime))
     end
 
     context 'when the expected atime is not valid' do
@@ -426,10 +550,12 @@ RSpec.describe 'the have_symlink matcher' do
   end
 
   describe 'the birthtime: option' do
-    subject { expect(tmpdir).to have_symlink(expected_name, birthtime: expected_birthtime) }
+    subject { expect(tmpdir).to have_dir(expected_name, birthtime: expected_birthtime) }
+
+    let(:path) { File.join(tmpdir, expected_name) }
 
     def mock_birthtime(path, actual_birthtime)
-      allow(File).to receive(:lstat).with(path).and_return(double(birthtime: actual_birthtime))
+      allow(File).to receive(:stat).with(path).and_return(double(birthtime: actual_birthtime))
     end
 
     context 'for a path that does not support birthtime' do
@@ -533,10 +659,12 @@ RSpec.describe 'the have_symlink matcher' do
   end
 
   describe 'the ctime: option' do
-    subject { expect(tmpdir).to have_symlink(expected_name, ctime: expected_ctime) }
+    subject { expect(tmpdir).to have_dir(expected_name, ctime: expected_ctime) }
+
+    let(:path) { File.join(tmpdir, expected_name) }
 
     def mock_ctime(path, actual_ctime)
-      allow(File).to receive(:lstat).with(path).and_return(double(ctime: actual_ctime))
+      allow(File).to receive(:stat).with(path).and_return(double(ctime: actual_ctime))
     end
 
     context 'when the expected ctime is not valid' do
@@ -626,10 +754,12 @@ RSpec.describe 'the have_symlink matcher' do
   end
 
   describe 'the mtime: option' do
-    subject { expect(tmpdir).to have_symlink(expected_name, mtime: expected_mtime) }
+    subject { expect(tmpdir).to have_dir(expected_name, mtime: expected_mtime) }
+
+    let(:path) { File.join(tmpdir, expected_name) }
 
     def mock_mtime(path, actual_mtime)
-      allow(File).to receive(:lstat).with(path).and_return(double(mtime: actual_mtime))
+      allow(File).to receive(:stat).with(path).and_return(double(mtime: actual_mtime))
     end
 
     context 'when given an invalid mtime value' do
@@ -687,8 +817,8 @@ RSpec.describe 'the have_symlink matcher' do
         it 'should fail' do
           FileUtils.touch(path)
           mock_mtime(path, actual_mtime)
-          expected_name = /expected mtime to be 1967-03-15 00:16:00 -0700, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_name)
+          expected_message = /expected mtime to be 1967-03-15 00:16:00 -0700, but was/
+          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
         end
       end
     end
@@ -717,198 +847,328 @@ RSpec.describe 'the have_symlink matcher' do
         end
       end
     end
+
+    context 'when given a specification block' do
+      context 'with an empty specification block' do
+        subject do
+          expect(tmpdir).to(
+            have_dir(expected_name) do
+              # No expectations in the block
+            end
+          )
+        end
+
+        it 'should not fail' do
+          expect { subject }.not_to raise_error
+        end
+      end
+
+      context 'with a specification block checking for a file' do
+        let(:subject) do
+          expect(tmpdir).to(
+            have_dir(expected_name) do
+              file('file.json', json_content: true)
+            end
+          )
+        end
+
+        context 'when the specification block expectations are met' do
+          before do
+            File.write(File.join(path, 'file.json'), '{"key": "value"}')
+          end
+
+          it 'should not fail' do
+            expect { subject }.not_to raise_error
+          end
+        end
+
+        context 'when the specification block expectations are not met' do
+          before do
+            File.write(File.join(path, 'file.json'), 'not a json file')
+          end
+
+          it 'should fail' do
+            expected_message = /expected valid JSON content, but got error: /
+            expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          end
+        end
+      end
+
+      context 'with a specification specification block checking for a directory' do
+        let(:subject) do
+          expect(tmpdir).to(
+            have_dir(expected_name) do
+              dir('nested_dir')
+            end
+          )
+        end
+
+        context 'when the specification block expectations are met' do
+          before do
+            nested_path = File.join(path, 'nested_dir')
+            Dir.mkdir(nested_path)
+          end
+
+          it 'should not fail' do
+            expect { subject }.not_to raise_error
+          end
+        end
+
+        context 'when the specification block expectations are not met' do
+          it 'should fail' do
+            expected_message = /expected it to exist/
+            expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          end
+        end
+      end
+
+      context 'with a specification block checking for a symlink' do
+        let(:subject) do
+          expect(tmpdir).to(
+            have_dir(expected_name) do
+              symlink('nested_symlink', target: 'expected_target')
+            end
+          )
+        end
+
+        context 'when the specification block expectations are met' do
+          before do
+            File.symlink('expected_target', File.join(path, 'nested_symlink'))
+          end
+
+          it 'should not fail' do
+            expect { subject }.not_to raise_error
+          end
+        end
+
+        context 'when the specification block expectations are not met' do
+          it 'should fail' do
+            expected_message = /expected it to exist/
+            expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          end
+        end
+      end
+
+      context 'with a specification block checking for multiple files' do
+        let(:subject) do
+          expect(tmpdir).to(
+            have_dir(expected_name) do
+              file('file1.txt', content: 'content1')
+              file('file2.txt', content: 'content2')
+            end
+          )
+        end
+
+        context 'when the specification block expectations are met' do
+          before do
+            File.write(File.join(path, 'file1.txt'), 'content1')
+            File.write(File.join(path, 'file2.txt'), 'content2')
+          end
+
+          it 'should not fail' do
+            expect { subject }.not_to raise_error
+          end
+        end
+
+        context 'when the specification block expectations are not met' do
+          before do
+            File.write(File.join(path, 'file1.txt'), 'wrong content')
+          end
+
+          it 'should fail' do
+            expected_message = /expected it to exist/
+            expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          end
+        end
+      end
+
+      context 'with a specification block checking for a directory with another specification block' do
+        let(:subject) do
+          expect(tmpdir).to(
+            have_dir(expected_name) do
+              dir('nested_dir') do
+                file('deeply_nested_file.txt', content: 'content')
+              end
+            end
+          )
+        end
+
+        context 'when the specification block expectations are met' do
+          before do
+            nested_path = File.join(path, 'nested_dir')
+            Dir.mkdir(nested_path)
+            File.write(File.join(nested_path, 'deeply_nested_file.txt'), 'content')
+          end
+
+          it 'should not fail' do
+            expect { subject }.not_to raise_error
+          end
+        end
+
+        context 'when the specification block expectations are not met' do
+          before do
+            nested_path = File.join(path, 'nested_dir')
+            Dir.mkdir(nested_path)
+            File.write(File.join(nested_path, 'deeply_nested_file.txt'), 'unexpected content')
+          end
+
+          it 'should fail' do
+            expected_message = /expected content to be "content"/
+            expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          end
+        end
+      end
+    end
   end
 
-  describe 'the target: option' do
-    subject { expect(tmpdir).to have_symlink(expected_name, target: expected_target) }
-
-    context 'when the expected target is not valid' do
-      let(:expected_target) { 123 }
-
-      it 'should raise an ArgumentError' do
-        expected_message = /expected `target:` to be a Matcher or a String, but was 123/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+  context 'with negative assertions in the specification block' do
+    describe 'the no_file method' do
+      subject do
+        expect(tmpdir).to(
+          have_dir(expected_name) do
+            no_file('entry.txt')
+          end
+        )
       end
-    end
 
-    context 'when given a String' do
-      context 'when the expected target matches the actual target' do
-        let(:expected_target) { target_path }
-
+      context 'when the file does not exist' do
         it 'should not fail' do
-          FileUtils.touch(path)
           expect { subject }.not_to raise_error
         end
       end
 
-      context 'when the expected target does not match the actual target' do
-        let(:expected_target) { 'not_target_path' }
+      context 'when an entry with the same name exists but is a directory' do
+        before do
+          Dir.mkdir(File.join(path, 'entry.txt'))
+        end
+
+        it 'should not fail' do
+          expect { subject }.not_to raise_error
+        end
+      end
+
+      context 'when the file exists' do
+        before do
+          File.write(File.join(path, 'entry.txt'), 'content')
+        end
 
         it 'should fail' do
-          expected_message = /expected target to be "not_target_path", but was "#{target_path}"/
+          expected_message = /expected file 'entry\.txt' not to be found at '.*', but it exists/
           expect { subject }.to raise_error(expectation_not_met_error, expected_message)
         end
       end
     end
 
-    context 'when given a matcher' do
-      context 'when the expected target matches the actual target' do
-        let(:expected_target) { eq target_path }
+    describe 'the no_dir method' do
+      subject do
+        expect(tmpdir).to(
+          have_dir(expected_name) do
+            no_dir('subdir')
+          end
+        )
+      end
 
+      context 'when the directory does not exist' do
         it 'should not fail' do
-          FileUtils.touch(path)
           expect { subject }.not_to raise_error
         end
       end
 
-      context 'when the expected target does not match the actual target' do
-        let(:expected_target) { eq 'not_the_target' }
-
-        it 'should fail' do
-          FileUtils.touch(path)
-          expected_message = /expected target to eq "not_the_target", but was #{Regexp.escape(target_path.inspect)}/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+      context 'when an entry with the same name exists but is a file' do
+        before do
+          File.write(File.join(path, 'subdir'), 'content')
         end
-      end
-    end
-  end
 
-  describe 'the target_type: option' do
-    subject { expect(tmpdir).to have_symlink(expected_name, target_type: expected_target_type) }
-
-    context 'when the expected target type is not valid' do
-      let(:expected_target_type) { 123 }
-
-      it 'should raise an ArgumentError' do
-        expected_message = /expected `target_type:` to be a Matcher, a String, or a Symbol but was 123/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
-      end
-    end
-
-    context 'when the symlink target does not exist' do
-      before do
-        FileUtils.rm_rf(target_path)
-      end
-
-      let(:expected_target_type) { 'file' }
-
-      it 'should fail' do
-        expected_message = /expected the symlink target to exist/
-        expect { subject }.to raise_error(expectation_not_met_error, expected_message)
-      end
-    end
-
-    context 'when given a Symbol' do
-      let(:expected_target_type) { :file }
-
-      context 'when the expected target type matches the actual target type' do
         it 'should not fail' do
-          FileUtils.rm_rf(target_path)
-          FileUtils.touch(target_path)
           expect { subject }.not_to raise_error
         end
       end
 
-      context 'when the expected target type does not match the actual target type' do
+      context 'when the directory exists' do
+        before do
+          Dir.mkdir(File.join(path, 'subdir'))
+        end
+
         it 'should fail' do
-          FileUtils.rm_rf(target_path)
-          Dir.mkdir(target_path) # Create a directory instead of a file
-          expected_message = /expected target_type to be "file", but was "directory"/
+          expected_message = /expected directory 'subdir' not to be found at '.*', but it exists/
           expect { subject }.to raise_error(expectation_not_met_error, expected_message)
         end
       end
     end
 
-    context 'when given a String' do
-      let(:expected_target_type) { 'directory' }
+    describe 'the no_symlink method' do
+      subject do
+        expect(tmpdir).to(
+          have_dir(expected_name) do
+            no_symlink('a_link')
+          end
+        )
+      end
 
-      context 'when the expected target type matches the actual target type' do
+      context 'when the symlink does not exist' do
         it 'should not fail' do
-          FileUtils.rm_rf(target_path)
-          Dir.mkdir(target_path)
           expect { subject }.not_to raise_error
         end
       end
-      context 'when the expected target type does not match the actual target type' do
+
+      context 'when an entry with the same name exists but is a file' do
+        before do
+          File.write(File.join(path, 'a_link'), 'content')
+        end
+
+        it 'should not fail' do
+          expect { subject }.not_to raise_error
+        end
+      end
+
+      context 'when the symlink exists' do
+        before do
+          File.symlink('a_target', File.join(path, 'a_link'))
+        end
+
         it 'should fail' do
-          FileUtils.rm_rf(target_path)
-          FileUtils.touch(target_path)
-          expected_message = /expected target_type to be "directory", but was "file"/
+          expected_message = /expected symlink 'a_link' not to be found at '.*', but it exists/
           expect { subject }.to raise_error(expectation_not_met_error, expected_message)
         end
       end
     end
 
-    context 'when given a matcher' do
-      let(:expected_target_type) { match(/^(file|directory)$/) }
+    context 'when mixing positive and negative assertions' do
+      subject do
+        expect(tmpdir).to(
+          have_dir(expected_name) do
+            file 'good_file.txt'
+            no_file 'bad_file.txt'
+          end
+        )
+      end
 
-      context 'when the expected target type matches the actual target type' do
+      context 'when all assertions are met' do
+        before do
+          File.write(File.join(path, 'good_file.txt'), 'content')
+        end
+
         it 'should not fail' do
-          FileUtils.rm_rf(target_path)
-          FileUtils.touch(target_path)
           expect { subject }.not_to raise_error
         end
       end
 
-      context 'when the expected target type does not match the actual target type' do
+      context 'when a positive assertion fails' do
+        # 'good_file.txt' is not created
         it 'should fail' do
-          FileUtils.rm_rf(target_path)
-          File.symlink('/tmp', target_path) # Create a symlink to a directory
-          regexp_str = Regexp.escape('/^(file|directory)$/')
-          expected_message = /expected target_type to match #{regexp_str}, but was "link"/
+          expected_message = /expected it to exist/
           expect { subject }.to raise_error(expectation_not_met_error, expected_message)
         end
       end
-    end
-  end
 
-  describe 'the target_exist: option' do
-    subject { expect(tmpdir).to have_symlink(expected_name, target_exist: expected_target_exist) }
-
-    context 'when the expected target exist is not valid' do
-      let(:expected_target_exist) { 123 }
-
-      it 'should raise an ArgumentError' do
-        expected_message = /expected `target_exist:` to be a Matcher, true, or false but was 123/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
-      end
-    end
-
-    context 'when given a Boolean' do
-      let(:expected_target_exist) { true }
-
-      context 'when the expected target exist matches the actual target exist' do
-        it 'should not fail' do
-          FileUtils.rm_rf(target_path)
-          FileUtils.touch(target_path)
-          expect { subject }.not_to raise_error
+      context 'when a negative assertion fails' do
+        before do
+          File.write(File.join(path, 'good_file.txt'), 'content')
+          File.write(File.join(path, 'bad_file.txt'), 'i should not be here')
         end
-      end
 
-      context 'when the expected target type does not match the actual target type' do
         it 'should fail' do
-          FileUtils.rm_rf(target_path)
-          expected_message = /expected target_exist to be true, but was false/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
-        end
-      end
-    end
-
-    context 'when given a matcher' do
-      let(:expected_target_exist) { be true }
-
-      context 'when the expected target type matches the actual target type' do
-        it 'should not fail' do
-          FileUtils.rm_rf(target_path)
-          FileUtils.touch(target_path)
-          expect { subject }.not_to raise_error
-        end
-      end
-
-      context 'when the expected target type does not match the actual target type' do
-        it 'should fail' do
-          FileUtils.rm_rf(target_path)
-          expected_message = /expected target_exist to equal true, but was false/
+          expected_message = /expected file 'bad_file\.txt' not to be found at '.*', but it exists/
           expect { subject }.to raise_error(expectation_not_met_error, expected_message)
         end
       end

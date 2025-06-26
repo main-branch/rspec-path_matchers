@@ -20,6 +20,8 @@ require_relative 'path_matchers/matchers/have_directory'
 require_relative 'path_matchers/matchers/have_symlink'
 require_relative 'path_matchers/matchers/have_no_entry'
 
+require_relative 'path_matchers/refinements'
+
 def have_file(name, **options_hash) # rubocop:disable Naming/PredicatePrefix
   RSpec::PathMatchers::Matchers::HaveFile.new(name, **options_hash)
 end

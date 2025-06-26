@@ -5,6 +5,7 @@ module RSpec
     module Options
       # The value used to indicate that an option was not given by the user
       NOT_GIVEN = Object.new.freeze
+      FETCH_ERROR = Object.new.freeze
     end
   end
 end
