@@ -33,17 +33,25 @@ assertions simple, declarative, and easier to read, allowing you to describe an 
 file tree and its properties within your specs. For example:
 
 ```ruby
-expect(project_dir).to(
-  be_dir do
-    file("README.md", content: /# MyProject/, birthtime: within(1.minute))
-    dir("lib") do
-      file("my_project.rb")
-      dir("my_project") do
-        file("version.rb", content: /VERSION = "0\.1\.0"/)
+require 'rspec/path_matchers'
+
+RSpec.describe 'Generated Project' do
+  it "should contain project files" do
+    project_dir = Dir.pwd
+
+    expect(project_dir).to(
+      have_dir(".") do
+        file("README.md", content: /MyProject/, birthtime: within(10_000).of(Time.now))
+        dir("lib", exact: true) do
+          file("my_project.rb")
+          dir("my_project", exact: true) do
+            file("version.rb", content: include('VERSION = "0.1.0"'), size: be < 1000)
+          end
+        end
       end
-    end
+    )
   end
-)
+end
 ```
 
 ## Added Value
@@ -287,7 +295,7 @@ end
 Matcher options allow detailed expectations on files, directories, and symlinks. Here
 are the options available on the three top level matchers:
 
-```text
+```ruby
 expect(path).to have_file(
   name, mode:, owner:, group:, ctime:, mtime:, size:, content:, json_content:, yaml_content:,
 )
