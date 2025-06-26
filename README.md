@@ -8,6 +8,7 @@ Status](https://img.shields.io/github/actions/workflow/status/main-branch/rspec-
 License](https://img.shields.io/badge/license-MIT-green)](https://opensource.org/licenses/MIT)
 
 - [Summary](#summary)
+- [Added Value](#added-value)
 - [Installation](#installation)
 - [Setup](#setup)
 - [Usage \& Examples](#usage--examples)
@@ -28,8 +29,24 @@ testing file system entries and structures.
 
 Verifying that a generator, build script, or any file-manipulating process has
 produced the correct output can be tedious and verbose. This gem makes those
-assertions simple, declarative, and easy to read, allowing you to describe an entire
-file tree and its properties within your specs.
+assertions simple, declarative, and easier to read, allowing you to describe an entire
+file tree and its properties within your specs. For example:
+
+```ruby
+expect(project_dir).to(
+  be_dir do
+    file("README.md", content: /# MyProject/, birthtime: within(1.minute))
+    dir("lib") do
+      file("my_project.rb")
+      dir("my_project") do
+        file("version.rb", content: /VERSION = "0\.1\.0"/)
+      end
+    end
+  end
+)
+```
+
+## Added Value
 
 Here’s a breakdown of the value this API provides over what is available in standard
 RSpec.
@@ -128,9 +145,9 @@ saving you valuable debugging time.
 
 **Standard RSpec Failure:**
 
-```
+```text
 expected: true
-        got: false
+got: false
 ```
 
 This kind of message forces you to manually inspect the directory structure to understand
@@ -141,7 +158,7 @@ what went wrong.
 You get a detailed, hierarchical report that shows the full expectation and
 clearly marks what failed.
 
-```
+```text
 the entry 'my-app' at '/tmp/d20250622-12345-abcdef' was expected to satisfy the following but did not:
 - have directory "config" containing:
     - have file "database.yml" with owner "db_user" and mode "0600"
