@@ -1,35 +1,26 @@
 # frozen_string_literal: true
 
 RSpec.describe RSpec::PathMatchers::Matchers::Base do
-  context 'when subclassed to create a matcher' do
-    let(:matcher) do
-      Class.new(described_class) do
-        def option_definitions = []
-      end.new('test_file')
+  context 'when not subclassed' do
+    let(:name) { double('name') }
+    let(:matcher_name) { double('matcher_name') }
+
+    let(:base_matcher) { described_class.new(name, matcher_name:) }
+
+    describe '.correct_type?' do
+      subject { base_matcher.send(:correct_type?) }
+      it_behaves_like 'an abstract method'
     end
 
-    describe '#matches?' do
-      context 'when not overridden in the subclass' do
-        it 'raises NotImplementedError' do
-          expect { matcher.matches?('/tmp') }.to raise_error(NotImplementedError)
-        end
-      end
+    describe '.entry_type' do
+      subject { base_matcher.send(:entry_type) }
+      it_behaves_like 'an abstract method'
     end
 
-    describe '#correct_type?' do
-      context 'when not overridden in the subclass' do
-        it 'raises NotImplementedError' do
-          expect { matcher.correct_type? }.to raise_error(NotImplementedError)
-        end
-      end
-    end
-
-    describe '#matcher_name' do
-      context 'when not overridden in the subclass' do
-        it 'raises NotImplementedError' do
-          expect { matcher.matcher_name }.to raise_error(NotImplementedError)
-        end
-      end
+    describe '.validate_existance' do
+      let(:failure_messages) { double('failure_messages') }
+      subject { base_matcher.send(:validate_existance, failure_messages) }
+      it_behaves_like 'an abstract method'
     end
   end
 end

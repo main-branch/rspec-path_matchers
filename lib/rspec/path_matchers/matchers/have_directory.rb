@@ -19,6 +19,8 @@ module RSpec
           RSpec::PathMatchers::Options::Owner
         ].freeze
 
+        def entry_type = :directory
+
         attr_reader :nested_matchers, :exact
 
         # Initializes the matcher with the directory name and options
@@ -75,7 +77,6 @@ module RSpec
 
         def option_definitions = OPTIONS
         def correct_type? = File.directory?(path)
-        def matcher_name = 'have_dir'
 
         protected
 
@@ -106,7 +107,7 @@ module RSpec
         def check_for_unexpected_entries
           positively_declared_entries = nested_matchers.reject do |m|
             m.is_a?(RSpec::PathMatchers::Matchers::HaveNoEntry)
-          end.map(&:name)
+          end.map(&:entry_name)
 
           actual_entries = Dir.children(path)
           unexpected_entries = actual_entries - positively_declared_entries

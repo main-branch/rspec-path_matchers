@@ -4,16 +4,22 @@
 module RSpec
   module PathMatchers
     module Matchers
-      # Asserts that a directory entry of a specific type does NOT exist.
+      # Asserts that a directory entry of a specific entry_type does NOT exist.
       # This is a simple, internal matcher-like object.
       #
       # @api private
       class HaveNoEntry
-        attr_reader :name
+        attr_reader :name, :matcher_name, :entry_type
 
-        def initialize(name, type:)
+        # Initializes the matcher with the entry name and type
+        #
+        # @param name [String] The name of the entry to check
+        #
+        # @param entry_type [Symbol] The type of the entry (:file, :directory, or :symlink)
+        #
+        def initialize(name, entry_type:)
           @name = name
-          @type = type
+          @entry_type = entry_type
           @base_path = nil
           @path = nil
         end
@@ -23,7 +29,7 @@ module RSpec
           @base_path = base_path
           @path = File.join(base_path, @name)
 
-          case @type
+          case entry_type
           when :file then !File.file?(@path)
           when :directory then !File.directory?(@path)
           else !File.symlink?(@path)
@@ -32,12 +38,12 @@ module RSpec
 
         # The failure message if `execute_match` returns `false`.
         def failure_message
-          "expected #{@type} '#{@name}' not to be found at '#{@base_path}', but it exists"
+          "expected #{entry_type} '#{@name}' not to be found at '#{@base_path}', but it exists"
         end
 
         # Provide a description for the `have_dir` block's output.
         def description
-          "not have #{@type} #{@name.inspect}"
+          "not have #{entry_type} #{@name.inspect}"
         end
 
         # Provide a stub for this method, which is called by HaveDirectory
