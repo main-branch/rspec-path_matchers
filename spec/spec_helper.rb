@@ -41,6 +41,16 @@ RSpec.shared_examples 'an abstract class method' do
   end
 end
 
+RSpec.shared_examples 'an abstract method' do
+  it 'raises NotImplementedError' do
+    expect { subject }.to raise_error(NotImplementedError) do |e|
+      class_name = described_class.to_s.split('::').last
+      method_name = e.backtrace_locations.first.label.split('::').last.split('#').last
+      expect(e.message).to eq("Subclasses must implement #{class_name}##{method_name}")
+    end
+  end
+end
+
 require 'simplecov-rspec'
 
 SimpleCov.enable_coverage :branch

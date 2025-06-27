@@ -24,32 +24,34 @@ module RSpec
 
         # Defines an expectation for a file within the directory.
         def file(name, **)
-          nested_matchers << RSpec::PathMatchers::Matchers::HaveFile.new(name, **)
+          nested_matchers << RSpec::PathMatchers::Matchers::HaveFile.new(name, matcher_name: __method__, **)
         end
 
         # Defines an expectation for a nested directory.
-        def dir(name, ...)
-          nested_matchers << RSpec::PathMatchers::Matchers::HaveDirectory.new(name, ...)
+        def dir(name, **options_hash, &)
+          nested_matchers << RSpec::PathMatchers::Matchers::HaveDirectory.new(
+            name, matcher_name: __method__, **options_hash, &
+          )
         end
 
         # Defines an expectation for a symlink within the directory.
         def symlink(name, **)
-          nested_matchers << RSpec::PathMatchers::Matchers::HaveSymlink.new(name, **)
+          nested_matchers << RSpec::PathMatchers::Matchers::HaveSymlink.new(name, matcher_name: __method__, **)
         end
 
         # Defines an expectation that a file does NOT exist within the directory.
         def no_file(name)
-          nested_matchers << RSpec::PathMatchers::Matchers::HaveNoEntry.new(name, type: :file)
+          nested_matchers << RSpec::PathMatchers::Matchers::HaveNoEntry.new(name, entry_type: :file)
         end
 
         # Defines an expectation that a directory does NOT exist within the directory.
         def no_dir(name)
-          nested_matchers << RSpec::PathMatchers::Matchers::HaveNoEntry.new(name, type: :directory)
+          nested_matchers << RSpec::PathMatchers::Matchers::HaveNoEntry.new(name, entry_type: :directory)
         end
 
         # Defines an expectation that a symlink does NOT exist within the directory.
         def no_symlink(name)
-          nested_matchers << RSpec::PathMatchers::Matchers::HaveNoEntry.new(name, type: :symlink)
+          nested_matchers << RSpec::PathMatchers::Matchers::HaveNoEntry.new(name, entry_type: :symlink)
         end
       end
     end

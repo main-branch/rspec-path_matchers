@@ -22,14 +22,18 @@ require_relative 'path_matchers/matchers/have_no_entry'
 
 require_relative 'path_matchers/refinements'
 
+def be_dir(**options_hash, &)
+  RSpec::PathMatchers::Matchers::HaveDirectory.new('', matcher_name: __method__, **options_hash, &)
+end
+
 def have_file(name, **options_hash) # rubocop:disable Naming/PredicatePrefix
-  RSpec::PathMatchers::Matchers::HaveFile.new(name, **options_hash)
+  RSpec::PathMatchers::Matchers::HaveFile.new(name, matcher_name: __method__, **options_hash)
 end
 
 def have_dir(name, **options_hash, &) # rubocop:disable Naming/PredicatePrefix
-  RSpec::PathMatchers::Matchers::HaveDirectory.new(name, **options_hash, &)
+  RSpec::PathMatchers::Matchers::HaveDirectory.new(name, matcher_name: __method__, **options_hash, &)
 end
 
 def have_symlink(name, **options_hash) # rubocop:disable Naming/PredicatePrefix
-  RSpec::PathMatchers::Matchers::HaveSymlink.new(name, **options_hash)
+  RSpec::PathMatchers::Matchers::HaveSymlink.new(name, matcher_name: __method__, **options_hash)
 end

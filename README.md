@@ -40,7 +40,7 @@ RSpec.describe 'Generated Project' do
     project_dir = Dir.pwd
 
     expect(project_dir).to(
-      have_dir(".") do
+      be_dir do
         file("README.md", content: /MyProject/, birthtime: within(10_000).of(Time.now))
         dir("lib", exact: true) do
           file("my_project.rb")
@@ -52,6 +52,23 @@ RSpec.describe 'Generated Project' do
     )
   end
 end
+```
+
+Coming soon. Plan to change the interface to use `containing` or `containing_exactly` rather than
+nested blocks and the `exact:` option:
+
+```ruby
+expect(project_dir).to(
+  be_dir.containing(
+    file("README.md", content: /MyProject/, birthtime: within(10_000).of(Time.now)),
+    dir("lib").containing_exactly(
+      file("my_project.rb"),
+      dir("my_project").containing_exactly(
+        file("version.rb", content: include('VERSION = "0.1.0"'), size: be < 1000)
+      )
+    )
+  )
+)
 ```
 
 ## Added Value

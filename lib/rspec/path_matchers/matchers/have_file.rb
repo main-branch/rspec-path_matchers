@@ -21,11 +21,11 @@ module RSpec
           RSpec::PathMatchers::Options::YamlContent
         ].freeze
 
+        def entry_type = :file
+
         def option_definitions = OPTIONS
 
         def correct_type? = File.file?(path)
-
-        def matcher_name = 'have_file'
 
         protected
 

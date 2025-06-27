@@ -19,11 +19,11 @@ module RSpec
           RSpec::PathMatchers::Options::SymlinkTargetType
         ].freeze
 
+        def entry_type = :symlink
+
         def option_definitions = OPTIONS
 
         def correct_type? = File.symlink?(path)
-
-        def matcher_name = 'have_symlink'
 
         protected
 
