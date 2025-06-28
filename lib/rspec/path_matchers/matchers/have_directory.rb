@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative 'base'
-require_relative 'directory_contents_inspector'
 
 module RSpec
   module PathMatchers
@@ -21,7 +20,35 @@ module RSpec
 
         def entry_type = :directory
 
-        attr_reader :nested_matchers, :exact
+        # An array of nested matchers that define the expected contents of the
+        # directory
+        #
+        # One element is added to the @nested_matchers array for each call to
+        # `containing` or `containing_exactly`. Since `containing` or
+        # `containing_exactly` are allowed only once per matcher, an error will be
+        # logged during validation if the size of this array is greater than one.
+        #
+        # Each element in @nested_matchers is itself an array of the matchers given
+        # in each `containing` or `containing_exactly` call.
+        #
+        # This method returns the first element of @nested_matchers (or an empty
+        # array of @nested_matchers is itself empty).
+        #
+        # @return [Array<Array<RSpec::PathMatchers::Matchers::Base>>]
+        #
+        def nested_matchers
+          @nested_matchers.first || []
+        end
+
+        # @attribute [r] exact
+        #
+        # If true, the dir must contain only entries given in `containing_exactly`
+        #
+        # The default is false, meaning the directory can contain additional entries.
+        #
+        # @return [Boolean]
+        #
+        attr_reader :exact
 
         # Initializes the matcher with the directory name and options
         #
@@ -33,21 +60,27 @@ module RSpec
         #
         # @param specification_block [Proc] A specification block that defines the expected directory contents
         #
-        def initialize(name, exact: false, **options_hash, &specification_block)
-          super(name, **options_hash)
+        def initialize(name, **options_hash)
+          super
 
-          @exact = exact
+          @exact = false
           @nested_matchers = []
-          return unless specification_block
+        end
 
-          inspector = DirectoryContentsInspector.new
-          inspector.instance_eval(&specification_block)
-          @nested_matchers = inspector.nested_matchers
+        def containing(*matchers)
+          @nested_matchers << matchers
+          @exact = false
+          self
+        end
+
+        def containing_exactly(*matchers)
+          @nested_matchers << matchers
+          @exact = true
+          self
         end
 
         def description
           desc = super
-          desc += ' exactly' if exact
           return desc if nested_matchers.empty?
 
           nested_descriptions = nested_matchers.map do |matcher|
@@ -56,20 +89,22 @@ module RSpec
             end.join("\n")
           end
 
-          "#{desc} containing:\n  #{nested_descriptions.join("\n  ")}"
+          "#{desc} containing#{' exactly' if exact}:\n  #{nested_descriptions.join("\n  ")}"
         end
 
         def collect_negative_validation_errors(errors)
           super
           return unless nested_matchers.any?
 
-          errors << "The matcher `not_to #{matcher_name}(...)` cannot be given a specification block"
+          errors << "The matcher `not_to #{matcher_name}(...)` cannot have expectations on its contents"
         end
 
         def collect_validation_errors(errors)
           super
 
-          errors << "`exact:` must be true or false, but was #{exact.inspect}" unless [true, false].include?(exact)
+          if @nested_matchers.size > 1
+            errors << 'Collectively, `#containing` and `#containing_exactly` may be called only once'
+          end
 
           # Recursively validate nested matchers.
           nested_matchers.each { |matcher| matcher.collect_validation_errors(errors) }

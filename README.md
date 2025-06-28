@@ -8,10 +8,10 @@ Status](https://img.shields.io/github/actions/workflow/status/main-branch/rspec-
 License](https://img.shields.io/badge/license-MIT-green)](https://opensource.org/licenses/MIT)
 
 - [Summary](#summary)
-- [Added Value](#added-value)
+- [Added Value Over Standard RSpec Matchers](#added-value-over-standard-rspec-matchers)
 - [Installation](#installation)
 - [Setup](#setup)
-- [Usage \& Examples](#usage--examples)
+- [Usage And Examples](#usage-and-examples)
   - [Basic Assertions](#basic-assertions)
   - [Negative Assertions (Checking for Absence)](#negative-assertions-checking-for-absence)
   - [File Content Assertions](#file-content-assertions)
@@ -35,43 +35,27 @@ file tree and its properties within your specs. For example:
 ```ruby
 require 'rspec/path_matchers'
 
-RSpec.describe 'Generated Project' do
+RSpec.describe 'The newly generated project' do
   it "should contain project files" do
     project_dir = Dir.pwd
 
     expect(project_dir).to(
-      be_dir do
-        file("README.md", content: /MyProject/, birthtime: within(10_000).of(Time.now))
-        dir("lib", exact: true) do
-          file("my_project.rb")
-          dir("my_project", exact: true) do
+      be_dir.containing(
+        file("README.md", content: include('MyProject'), birthtime: within(10_000).of(Time.now)),
+        dir("lib").containing_exactly(
+          file("my_project.rb"),
+          dir("my_project").containing_exactly(
             file("version.rb", content: include('VERSION = "0.1.0"'), size: be < 1000)
-          end
-        end
-      end
+          )
+        ),
+        no_dir_named('tmp')
+      )
     )
   end
 end
 ```
 
-Coming soon. Plan to change the interface to use `containing` or `containing_exactly` rather than
-nested blocks and the `exact:` option:
-
-```ruby
-expect(project_dir).to(
-  be_dir.containing(
-    file("README.md", content: /MyProject/, birthtime: within(10_000).of(Time.now)),
-    dir("lib").containing_exactly(
-      file("my_project.rb"),
-      dir("my_project").containing_exactly(
-        file("version.rb", content: include('VERSION = "0.1.0"'), size: be < 1000)
-      )
-    )
-  )
-)
-```
-
-## Added Value
+## Added Value Over Standard RSpec Matchers
 
 Here’s a breakdown of the value this API provides over what is available in standard
 RSpec.
@@ -153,15 +137,17 @@ With this API:
 
 ```ruby
 # This is a clear, hierarchical specification of the directory's contents.
-expect('/etc/service').to(have_dir('nginx') do
-    file('run')
-    dir('log')
-    no_file('down')
-end)
+expect('/etc/service/nginx').to(
+  be_dir.containing(
+    file('run'),
+    dir('log'),
+    no_file_named('down')
+  )
+)
 ```
 
-The nested block is a leap in expressiveness and power, allowing you to write
-complex integration and infrastructure tests with ease.
+The nested `containing` matchers allows you to write tests that humans
+can make sense of.
 
 <h3>4. Descriptive and Intelligible Failure Messages</h3>
 
@@ -183,8 +169,18 @@ what went wrong.
 You get a detailed, hierarchical report that shows the full expectation and
 clearly marks what failed.
 
+For this expectation:
+
+```ruby
+expect('config').to(
+  be_dir.containing(
+    file('database.xml', owner: 'db_user', mode: '0600')
+  )
+)
+```
+
 ```text
-the entry 'my-app' at '/tmp/d20250622-12345-abcdef' was expected to satisfy the following but did not:
+'/tmp/d20250622-12345-abcdef/my-app' was expected to satisfy the following but did not:
 - have directory "config" containing:
     - have file "database.yml" with owner "db_user" and mode "0600"
     - expected owner to be "db_user", but was "root"
@@ -222,7 +218,7 @@ Require the gem in your `spec/spec_helper.rb` file:
 require 'rspec/path_matchers'
 ```
 
-## Usage & Examples
+## Usage And Examples
 
 All matchers operate on a base path, making your tests clean and portable.
 
@@ -359,7 +355,7 @@ end
 
 The block syntax is the most powerful feature. It allows you to describe and verify
 an entire file tree, including both the presence and *absence* of entries using
-methods like `no_file`, `no_dir`, and `no_symlink`.
+methods like `no_dir_named`, `no_file_named`, and `no_symlink_named`.
 
 ```ruby
 before do
@@ -395,7 +391,7 @@ it "validates a nested directory structure" do
     dir "log"
 
     # Assert the absence of other entries at the root of 'my-app'
-    no_dir "tmp"
+    no_dir_named "tmp"
     no_file "README.md"
   end)
 end

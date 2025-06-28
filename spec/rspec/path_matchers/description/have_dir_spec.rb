@@ -13,16 +13,9 @@ RSpec.describe 'have_dir.description' do
     it { is_expected.to eq('have directory "my_dir" with mode "0755" and owner "dev"') }
   end
 
-  context 'with the exact option' do
-    let(:matcher) { have_dir('my_dir', exact: true) }
-    it { is_expected.to eq('have directory "my_dir" exactly') }
-  end
-
-  context 'with one nested matcher' do
+  context 'with one expectation on its contents' do
     let(:matcher) do
-      have_dir('my_dir') do
-        file 'a.txt', content: 'hello'
-      end
+      have_dir('my_dir').containing(file('a.txt', content: 'hello'))
     end
     let(:expected_description) do
       <<~DESC.chomp
@@ -33,13 +26,11 @@ RSpec.describe 'have_dir.description' do
     it { is_expected.to eq(expected_description) }
   end
 
-  context 'with two nested matchers' do
+  context 'with two expectations on its contents' do
     let(:matcher) do
-      have_dir('my_dir') do
-        file 'a.txt'
-        dir 'subdir'
-      end
+      have_dir('my_dir').containing(file('a.txt'), dir('subdir'))
     end
+
     let(:expected_description) do
       <<~DESC.chomp
         have directory "my_dir" containing:
@@ -50,15 +41,14 @@ RSpec.describe 'have_dir.description' do
     it { is_expected.to eq(expected_description) }
   end
 
-  context 'with a deeply nested structure' do
+  context 'with a deeply nested expectations on its contents' do
     let(:matcher) do
-      have_dir('app', owner: 'dev') do
-        dir 'models' do
-          file 'user.rb', size: be > 100
-        end
-        file 'config.ru'
-      end
+      have_dir('app', owner: 'dev').containing(
+        dir('models').containing(file('user.rb', size: be > 100)),
+        file('config.ru')
+      )
     end
+
     let(:expected_description) do
       <<~DESC.chomp
         have directory "app" with owner "dev" containing:
@@ -67,6 +57,23 @@ RSpec.describe 'have_dir.description' do
           - have file "config.ru"
       DESC
     end
+
+    it { is_expected.to eq(expected_description) }
+  end
+
+  context 'with exact expectations on its contents' do
+    let(:matcher) do
+      have_dir('my_dir').containing_exactly(file('a.txt'), dir('subdir'))
+    end
+
+    let(:expected_description) do
+      <<~DESC.chomp
+        have directory "my_dir" containing exactly:
+          - have file "a.txt"
+          - have directory "subdir"
+      DESC
+    end
+
     it { is_expected.to eq(expected_description) }
   end
 end

@@ -13,17 +13,11 @@ RSpec.describe 'be_dir.description' do
     it { is_expected.to eq('be a directory with mode "0755" and owner "dev"') }
   end
 
-  context 'with the exact option' do
-    let(:matcher) { be_dir(exact: true) }
-    it { is_expected.to eq('be a directory exactly') }
-  end
-
-  context 'with one nested matcher' do
+  context 'with one expectation on contents' do
     let(:matcher) do
-      be_dir do
-        file 'a.txt', content: 'hello'
-      end
+      be_dir.containing(file('a.txt', content: 'hello'))
     end
+
     let(:expected_description) do
       <<~DESC.chomp
         be a directory containing:
@@ -33,12 +27,9 @@ RSpec.describe 'be_dir.description' do
     it { is_expected.to eq(expected_description) }
   end
 
-  context 'with two nested matchers' do
+  context 'with two expectations on contents' do
     let(:matcher) do
-      be_dir do
-        file 'a.txt'
-        dir 'subdir'
-      end
+      be_dir.containing(file('a.txt'), dir('subdir'))
     end
     let(:expected_description) do
       <<~DESC.chomp
@@ -50,14 +41,12 @@ RSpec.describe 'be_dir.description' do
     it { is_expected.to eq(expected_description) }
   end
 
-  context 'with a deeply nested structure' do
+  context 'with a deeply nested expectations on contents' do
     let(:matcher) do
-      be_dir(owner: 'dev') do
-        dir 'models' do
-          file 'user.rb', size: be > 100
-        end
-        file 'config.ru'
-      end
+      be_dir(owner: 'dev').containing(
+        dir('models').containing(file('user.rb', size: be > 100)),
+        file('config.ru')
+      )
     end
     let(:expected_description) do
       <<~DESC.chomp
@@ -67,6 +56,22 @@ RSpec.describe 'be_dir.description' do
           - have file "config.ru"
       DESC
     end
+    it { is_expected.to eq(expected_description) }
+  end
+
+  context 'with exact expectations on its contents' do
+    let(:matcher) do
+      be_dir.containing_exactly(file('a.txt'), dir('subdir'))
+    end
+
+    let(:expected_description) do
+      <<~DESC.chomp
+        be a directory containing exactly:
+          - have file "a.txt"
+          - have directory "subdir"
+      DESC
+    end
+
     it { is_expected.to eq(expected_description) }
   end
 end

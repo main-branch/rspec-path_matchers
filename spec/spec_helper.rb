@@ -62,3 +62,7 @@ SimpleCov::RSpec.start(list_uncovered_lines: ci_build?) do
 end
 
 require 'rspec/path_matchers'
+
+RSpec.configure do |config|
+  config.include RSpec::PathMatchers
+end

@@ -5,78 +5,48 @@ require 'rspec/path_matchers'
 require 'tmpdir'
 
 RSpec.describe 'the have_dir matcher' do
-  describe 'the exact: option' do
-    around(:each) do |example|
-      Dir.mktmpdir do |tmpdir|
-        @tmpdir = tmpdir
-        example.run
-      end
+  around(:each) do |example|
+    Dir.mktmpdir do |tmpdir|
+      @tmpdir = tmpdir
+      example.run
     end
+  end
 
-    let(:tmpdir) { @tmpdir }
-    let(:expected_name) { 'my-app' }
-    let(:path) { File.join(tmpdir, expected_name) }
-    let(:expectation_not_met_error) { RSpec::Expectations::ExpectationNotMetError }
+  let(:tmpdir) { @tmpdir }
+  let(:expected_name) { 'my-app' }
+  let(:path) { File.join(tmpdir, expected_name) }
+  let(:expectation_not_met_error) { RSpec::Expectations::ExpectationNotMetError }
 
-    before do
-      Dir.mkdir(path)
-    end
+  before do
+    Dir.mkdir(path)
+  end
 
-    context 'when exact: is not given' do
-      subject { expect(tmpdir).to have_dir(expected_name) }
-
-      it 'should default to non-exact behavior by ignoring unexpected files' do
-        File.write(File.join(path, 'unexpected.txt'), 'content')
-        expect { subject }.not_to raise_error
-      end
-    end
-
-    context 'when the exact: value is not valid' do
+  context 'with an expectation on the contents' do
+    context 'when setting expectations with #containing' do
       subject do
         expect(tmpdir).to(
-          have_dir(expected_name, exact: 'invalid')
+          have_dir(expected_name).containing(file('file1.txt'), file('file2.txt'))
         )
       end
 
-      it 'should raise an ArgumentError' do
-        expected_message = '`exact:` must be true or false, but was "invalid"'
-        expect { subject }.to raise_error(ArgumentError, expected_message)
-      end
-    end
-
-    context 'when the exact: value is false' do
-      context 'when the specification block expects some entries' do
-        subject do
-          expect(tmpdir).to(
-            have_dir(expected_name, exact: false) do
-              file('file1.txt')
-              file('file2.txt')
-            end
-          )
+      context 'when the actual directory contains an unexpected entry' do
+        before do
+          File.write(File.join(path, 'file1.txt'), 'content')
+          File.write(File.join(path, 'file2.txt'), 'content')
+          File.write(File.join(path, 'unexpected.txt'), 'content') # The extra file
         end
 
-        context 'when the actual directory contains an unexpected entry' do
-          before do
-            File.write(File.join(path, 'file1.txt'), 'content')
-            File.write(File.join(path, 'file2.txt'), 'content')
-            File.write(File.join(path, 'unexpected.txt'), 'content') # The extra file
-          end
-
-          it 'should not fail' do
-            expect { subject }.not_to raise_error
-          end
+        it 'should not fail' do
+          expect { subject }.not_to raise_error
         end
       end
     end
 
-    context 'when the exact: value is true' do
+    context 'when setting expectations with #containing_exactly' do
       context 'when the specification block expects no entries' do
         subject do
-          expect(tmpdir).to(
-            have_dir(expected_name, exact: true) do
-              # Intentionally empty -- no entries expected
-            end
-          )
+          # TODO: maybe add an option for `empty` or `entry_count` or both
+          expect(tmpdir).to(have_dir(expected_name).containing_exactly)
         end
 
         context 'when the actual directory is empty' do
@@ -103,10 +73,11 @@ RSpec.describe 'the have_dir matcher' do
       context 'when the specification block expects multiple entries' do
         subject do
           expect(tmpdir).to(
-            have_dir(expected_name, exact: true) do
-              file 'file1.txt'
-              dir 'subdir'
-            end
+            have_dir(expected_name).containing_exactly(
+              file('file1.txt'),
+              dir('subdir'),
+              symlink('link_to_target')
+            )
           )
         end
 
@@ -114,6 +85,7 @@ RSpec.describe 'the have_dir matcher' do
           before do
             File.write(File.join(path, 'file1.txt'), 'content')
             Dir.mkdir(File.join(path, 'subdir'))
+            File.symlink('target', File.join(path, 'link_to_target'))
           end
           it 'should not fail' do
             expect { subject }.not_to raise_error
@@ -124,6 +96,7 @@ RSpec.describe 'the have_dir matcher' do
           before do
             File.write(File.join(path, 'file1.txt'), 'content')
             Dir.mkdir(File.join(path, 'subdir'))
+            File.symlink('target', File.join(path, 'link_to_target'))
             # Add unexpected entries
             File.write(File.join(path, 'unexpected_file.txt'), 'content')
             Dir.mkdir(File.join(path, 'unexpected_dir'))
@@ -143,10 +116,10 @@ RSpec.describe 'the have_dir matcher' do
       context 'when the specification block includes no_* matchers' do
         subject do
           expect(tmpdir).to(
-            have_dir(expected_name, exact: true) do
-              file('file1.txt')
-              no_file('file2.txt')
-            end
+            have_dir(expected_name).containing_exactly(
+              file('file1.txt'),
+              no_file_named('file2.txt')
+            )
           )
         end
 
