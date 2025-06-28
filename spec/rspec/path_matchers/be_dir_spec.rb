@@ -174,13 +174,13 @@ RSpec.describe 'the be_dir matcher' do
       end
     end
 
-    context 'with a specification block' do
+    context 'with an expectation on its contents' do
       subject do
-        expect(path).not_to(be_dir { file('asdf') })
+        expect(path).not_to(be_dir.containing(file('asdf')))
       end
 
       it 'should raise an ArgumentError' do
-        expected_message = 'The matcher `not_to be_dir(...)` cannot be given a specification block'
+        expected_message = 'The matcher `not_to be_dir(...)` cannot have expectations on its contents'
         expect { subject }.to raise_error(ArgumentError, expected_message)
       end
     end
@@ -829,15 +829,29 @@ RSpec.describe 'the be_dir matcher' do
         end
       end
     end
+  end
 
-    context 'when given a specification block' do
-      context 'with an empty specification block' do
-        subject do
-          expect(path).to(
-            be_dir do
-              # No expectations in the block
-            end
-          )
+  context 'when given expectations on its contents' do
+    context 'with no expectations' do
+      subject do
+        expect(path).to(be_dir.containing)
+      end
+
+      it 'should not fail' do
+        expect { subject }.not_to raise_error
+      end
+    end
+
+    context 'with an expectation that it contains a file with json content' do
+      let(:subject) do
+        expect(path).to(
+          be_dir.containing(file('file.json', json_content: true))
+        )
+      end
+
+      context 'when the expectation is met' do
+        before do
+          File.write(File.join(path, 'file.json'), '{"key": "value"}')
         end
 
         it 'should not fail' do
@@ -845,172 +859,140 @@ RSpec.describe 'the be_dir matcher' do
         end
       end
 
-      context 'with a specification block checking for a file' do
-        let(:subject) do
-          expect(path).to(
-            be_dir do
-              file('file.json', json_content: true)
-            end
-          )
+      context 'when the expectation is not met' do
+        before do
+          File.write(File.join(path, 'file.json'), 'not a json file')
         end
 
-        context 'when the specification block expectations are met' do
-          before do
-            File.write(File.join(path, 'file.json'), '{"key": "value"}')
-          end
+        it 'should fail' do
+          expected_message = /expected valid JSON content, but got error: /
+          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+        end
+      end
+    end
 
-          it 'should not fail' do
-            expect { subject }.not_to raise_error
-          end
+    context 'with an expectation that it contains a directory' do
+      let(:subject) do
+        expect(path).to(be_dir.containing(dir('nested_dir')))
+      end
+
+      context 'when the expectation is met' do
+        before do
+          nested_path = File.join(path, 'nested_dir')
+          Dir.mkdir(nested_path)
         end
 
-        context 'when the specification block expectations are not met' do
-          before do
-            File.write(File.join(path, 'file.json'), 'not a json file')
-          end
-
-          it 'should fail' do
-            expected_message = /expected valid JSON content, but got error: /
-            expect { subject }.to raise_error(expectation_not_met_error, expected_message)
-          end
+        it 'should not fail' do
+          expect { subject }.not_to raise_error
         end
       end
 
-      context 'with a specification specification block checking for a directory' do
-        let(:subject) do
-          expect(path).to(
-            be_dir do
-              dir('nested_dir')
-            end
-          )
+      context 'when the expectation is not met' do
+        it 'should fail' do
+          expected_message = /expected it to exist/
+          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+        end
+      end
+    end
+
+    context 'with an expectation that it contains a symlink' do
+      let(:subject) do
+        expect(path).to(be_dir.containing(symlink('nested_symlink', target: 'expected_target')))
+      end
+
+      context 'when the expectation is met' do
+        before do
+          File.symlink('expected_target', File.join(path, 'nested_symlink'))
         end
 
-        context 'when the specification block expectations are met' do
-          before do
-            nested_path = File.join(path, 'nested_dir')
-            Dir.mkdir(nested_path)
-          end
-
-          it 'should not fail' do
-            expect { subject }.not_to raise_error
-          end
-        end
-
-        context 'when the specification block expectations are not met' do
-          it 'should fail' do
-            expected_message = /expected it to exist/
-            expect { subject }.to raise_error(expectation_not_met_error, expected_message)
-          end
+        it 'should not fail' do
+          expect { subject }.not_to raise_error
         end
       end
 
-      context 'with a specification block checking for a symlink' do
-        let(:subject) do
-          expect(path).to(
-            be_dir do
-              symlink('nested_symlink', target: 'expected_target')
-            end
+      context 'when the expectation is not met' do
+        it 'should fail' do
+          expected_message = /expected it to exist/
+          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+        end
+      end
+    end
+
+    context 'with expectations that it contains multiple files' do
+      let(:subject) do
+        expect(path).to(
+          be_dir.containing(
+            file('file1.txt', content: 'content1'),
+            file('file2.txt', content: 'content2')
           )
+        )
+      end
+
+      context 'when the expectations are all met' do
+        before do
+          File.write(File.join(path, 'file1.txt'), 'content1')
+          File.write(File.join(path, 'file2.txt'), 'content2')
         end
 
-        context 'when the specification block expectations are met' do
-          before do
-            File.symlink('expected_target', File.join(path, 'nested_symlink'))
-          end
-
-          it 'should not fail' do
-            expect { subject }.not_to raise_error
-          end
-        end
-
-        context 'when the specification block expectations are not met' do
-          it 'should fail' do
-            expected_message = /expected it to exist/
-            expect { subject }.to raise_error(expectation_not_met_error, expected_message)
-          end
+        it 'should not fail' do
+          expect { subject }.not_to raise_error
         end
       end
 
-      context 'with a specification block checking for multiple files' do
-        let(:subject) do
-          expect(path).to(
-            be_dir do
-              file('file1.txt', content: 'content1')
-              file('file2.txt', content: 'content2')
-            end
+      context 'when the expectations are not all met' do
+        before do
+          File.write(File.join(path, 'file1.txt'), 'wrong content')
+        end
+
+        it 'should fail' do
+          expected_message = /expected it to exist/
+          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+        end
+      end
+    end
+
+    context 'with deeply nested expectations' do
+      let(:subject) do
+        expect(path).to(
+          be_dir.containing(
+            dir('nested_dir').containing(
+              file('deeply_nested_file.txt', content: 'content')
+            )
           )
+        )
+      end
+
+      context 'when the expectations are met' do
+        before do
+          nested_path = File.join(path, 'nested_dir')
+          Dir.mkdir(nested_path)
+          File.write(File.join(nested_path, 'deeply_nested_file.txt'), 'content')
         end
 
-        context 'when the specification block expectations are met' do
-          before do
-            File.write(File.join(path, 'file1.txt'), 'content1')
-            File.write(File.join(path, 'file2.txt'), 'content2')
-          end
-
-          it 'should not fail' do
-            expect { subject }.not_to raise_error
-          end
-        end
-
-        context 'when the specification block expectations are not met' do
-          before do
-            File.write(File.join(path, 'file1.txt'), 'wrong content')
-          end
-
-          it 'should fail' do
-            expected_message = /expected it to exist/
-            expect { subject }.to raise_error(expectation_not_met_error, expected_message)
-          end
+        it 'should not fail' do
+          expect { subject }.not_to raise_error
         end
       end
 
-      context 'with a specification block checking for a directory with another specification block' do
-        let(:subject) do
-          expect(path).to(
-            be_dir do
-              dir('nested_dir') do
-                file('deeply_nested_file.txt', content: 'content')
-              end
-            end
-          )
+      context 'when the expectations are not met' do
+        before do
+          nested_path = File.join(path, 'nested_dir')
+          Dir.mkdir(nested_path)
+          File.write(File.join(nested_path, 'deeply_nested_file.txt'), 'unexpected content')
         end
 
-        context 'when the specification block expectations are met' do
-          before do
-            nested_path = File.join(path, 'nested_dir')
-            Dir.mkdir(nested_path)
-            File.write(File.join(nested_path, 'deeply_nested_file.txt'), 'content')
-          end
-
-          it 'should not fail' do
-            expect { subject }.not_to raise_error
-          end
-        end
-
-        context 'when the specification block expectations are not met' do
-          before do
-            nested_path = File.join(path, 'nested_dir')
-            Dir.mkdir(nested_path)
-            File.write(File.join(nested_path, 'deeply_nested_file.txt'), 'unexpected content')
-          end
-
-          it 'should fail' do
-            expected_message = /expected content to be "content"/
-            expect { subject }.to raise_error(expectation_not_met_error, expected_message)
-          end
+        it 'should fail' do
+          expected_message = /expected content to be "content"/
+          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
         end
       end
     end
   end
 
   context 'with negative assertions in the specification block' do
-    describe 'the no_file method' do
+    describe 'the no_file_named method' do
       subject do
-        expect(path).to(
-          be_dir do
-            no_file('entry.txt')
-          end
-        )
+        expect(path).to(be_dir.containing(no_file_named('entry.txt')))
       end
 
       context 'when the file does not exist' do
@@ -1041,13 +1023,9 @@ RSpec.describe 'the be_dir matcher' do
       end
     end
 
-    describe 'the no_dir method' do
+    describe 'the no_dir_named method' do
       subject do
-        expect(path).to(
-          be_dir do
-            no_dir('subdir')
-          end
-        )
+        expect(path).to(be_dir.containing(no_dir_named('subdir')))
       end
 
       context 'when the directory does not exist' do
@@ -1078,13 +1056,9 @@ RSpec.describe 'the be_dir matcher' do
       end
     end
 
-    describe 'the no_symlink method' do
+    describe 'the no_symlink_named method' do
       subject do
-        expect(path).to(
-          be_dir do
-            no_symlink('a_link')
-          end
-        )
+        expect(path).to(be_dir.containing(no_symlink_named('a_link')))
       end
 
       context 'when the symlink does not exist' do
@@ -1117,12 +1091,7 @@ RSpec.describe 'the be_dir matcher' do
 
     context 'when mixing positive and negative assertions' do
       subject do
-        expect(path).to(
-          be_dir do
-            file 'good_file.txt'
-            no_file 'bad_file.txt'
-          end
-        )
+        expect(path).to(be_dir.containing(file('good_file.txt'), no_file_named('bad_file.txt')))
       end
 
       context 'when all assertions are met' do

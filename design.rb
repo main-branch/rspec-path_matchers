@@ -47,17 +47,17 @@ expect(path).to have_dir(name, mtime: matcher) # ...the directory modification t
 
 # Nested directory checks ()
 expect(path).to(
-  have_dir(name) do
-    file('nested_file.txt', content: 'expected content')
-    dir('nested_dir') do
+  have_dir(name).containing(
+    file('nested_file.txt', content: 'expected content'),
+    symlink('nested_symlink', target: 'expected_target'),
+    no_file_named('non_existent_file.txt'),
+    no_dir_named('non_existent_dir'),
+    no_symlink_named('non_existent_symlink'),
+    no_entry_named('non_existent_entry'),
+    dir('nested_dir').containing_exactly(
       file('deeply_nested_file.txt', content: 'deeply expected content')
-    end
-    symlink('nested_symlink', target: 'expected_target')
-    no_file('non_existent_file.txt')
-    no_dir('non_existent_dir')
-    no_symlink('non_existent_symlink')
-    no_entry('non_existent_entry') # This checks for the absence of any type of entry with the given name
-  end
+    )
+  )
 )
 
 ########################################
