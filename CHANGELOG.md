@@ -1,5 +1,24 @@
 ## [Unreleased]
 
+## [0.2.0](https://github.com/main-branch/rspec-path_matchers/compare/v0.1.1...v0.2.0) (2025-06-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* You must use `#containing` to to set expectations on dir content instead of a block
+
+### Features
+
+* Add the be_dir matcher ([b16bf00](https://github.com/main-branch/rspec-path_matchers/commit/b16bf005fabba9dfa55b284543c1347efcaae62e))
+* Change how expectations are nested for have_dir and be_dir ([e61d8fd](https://github.com/main-branch/rspec-path_matchers/commit/e61d8fddf0b6f3290fbdd01c15940b5a8a2e7361))
+
+
+### Other Changes
+
+* Refactor the Options classes to reduce duplicaate code ([7e23190](https://github.com/main-branch/rspec-path_matchers/commit/7e231902a1a56162511a745d529c19acd06d50e6))
+* Update README to give an example toward the top of the doc ([ece4afc](https://github.com/main-branch/rspec-path_matchers/commit/ece4afc3edb1e27e96fa3fe70052c99a73f6a221))
+* Update README to give an example toward the top of the doc ([5b0f196](https://github.com/main-branch/rspec-path_matchers/commit/5b0f19646fe6cd7b7cba6c057e690b7b54d5c3c3))
+
 ## [0.1.1](https://github.com/main-branch/rspec-path_matchers/compare/v0.1.0...v0.1.1) (2025-06-25)
 
 
