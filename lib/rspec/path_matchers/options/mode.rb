@@ -10,7 +10,7 @@ module RSpec
         def self.key = :mode
         def self.stat_attribute = :mode
         def self.valid_expected_types = [String]
-        def self.fetch_actual(path, _failure_messages) = File.stat(path).mode.to_s(8)[-4..]
+        def self.fetch_actual(path, _failures) = File.stat(path).mode.to_s(8)[-4..]
       end
     end
   end

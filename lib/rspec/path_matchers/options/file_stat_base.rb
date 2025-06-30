@@ -7,8 +7,9 @@ module RSpec
     module Options
       # Base class for options whose actual value comes from File::Stat
       class FileStatBase < Base
-        # Implements fetch_actual using File.stat
-        def self.fetch_actual(path, _failure_messages)
+        # Implements fetch_actual by calling a specified method on a File::Stat object.
+        #
+        def self.fetch_actual(path, _failures)
           File.public_send(stat_source_method, path).public_send(stat_attribute)
         end
 

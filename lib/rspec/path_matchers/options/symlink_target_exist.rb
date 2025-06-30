@@ -10,7 +10,7 @@ module RSpec
         def self.key = :target_exist
         def self.valid_expected_types = [TrueClass, FalseClass]
 
-        def self.fetch_actual(path, _failure_messages) # rubocop:disable Naming/PredicateMethod
+        def self.fetch_actual(path, _failures) # rubocop:disable Naming/PredicateMethod
           File.exist?(File.expand_path(File.readlink(path), File.dirname(path)))
         end
       end

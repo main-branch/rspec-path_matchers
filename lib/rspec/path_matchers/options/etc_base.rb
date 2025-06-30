@@ -9,7 +9,9 @@ module RSpec
       class EtcBase < FileStatBase
         def self.valid_expected_types = [String]
 
-        def self.match(path, expected, failure_messages)
+        # Overrides the base match method to first check if the platform
+        # supports Etc lookups before proceeding
+        def self.match(path, expected, failures)
           # Skip the check entirely if the platform doesn't support it
           return unless supported_platform?
 
@@ -26,7 +28,7 @@ module RSpec
         end
 
         # Fetches the UID/GID from stat and looks up the name via Etc
-        private_class_method def self.fetch_actual(path, _failure_messages)
+        private_class_method def self.fetch_actual(path, _failures)
           Etc.public_send(etc_method, super).name
         end
 

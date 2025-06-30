@@ -8,16 +8,15 @@ Status](https://img.shields.io/github/actions/workflow/status/main-branch/rspec-
 License](https://img.shields.io/badge/license-MIT-green)](https://opensource.org/licenses/MIT)
 
 - [Summary](#summary)
-- [Added Value Over Standard RSpec Matchers](#added-value-over-standard-rspec-matchers)
 - [Installation](#installation)
 - [Setup](#setup)
-- [Usage And Examples](#usage-and-examples)
+- [Usage](#usage)
   - [Basic Assertions](#basic-assertions)
-  - [Negative Assertions (Checking for Absence)](#negative-assertions-checking-for-absence)
-  - [File Content Assertions](#file-content-assertions)
   - [Attribute Assertions](#attribute-assertions)
-  - [Directory Structure Assertions](#directory-structure-assertions)
-  - [Exact Directory Contents](#exact-directory-contents)
+  - [Directory Content \& Nested Assertions](#directory-content--nested-assertions)
+  - [Clear Failure Messages](#clear-failure-messages)
+  - [Available Options](#available-options)
+- [Added Value Over Standard RSpec Matchers](#added-value-over-standard-rspec-matchers)
 - [Development](#development)
 - [Contributing](#contributing)
 - [License](#license)
@@ -25,34 +24,139 @@ License](https://img.shields.io/badge/license-MIT-green)](https://opensource.org
 ## Summary
 
 **RSpec::PathMatchers** provides a comprehensive suite of RSpec matchers for
-testing file system entries and structures.
+testing directory structures.
 
 Verifying that a generator, build script, or any file-manipulating process has
 produced the correct output can be tedious and verbose. This gem makes those
 assertions simple, declarative, and easier to read, allowing you to describe an entire
-file tree and its properties within your specs. For example:
+file tree and its properties within your specs.
+
+## Installation
+
+Add this line to your application's `Gemfile` in the `:test` or `:development` group:
 
 ```ruby
+group :test, :development do
+  gem 'rspec-path_matchers'
+end
+```
+
+OR add it to your project's `gemspec`:
+
+```ruby
+spec.add_development_dependency 'rspec-path_matchers'
+```
+
+And then execute:
+
+```bash
+bundle install
+```
+
+## Setup
+
+Require the gem in your `spec/spec_helper.rb` file:
+
+```ruby
+# spec/spec_helper.rb
 require 'rspec/path_matchers'
 
-RSpec.describe 'The newly generated project' do
-  it "should contain project files" do
-    project_dir = Dir.pwd
-
-    expect(project_dir).to(
-      be_dir.containing(
-        file("README.md", content: include('MyProject'), birthtime: within(10_000).of(Time.now)),
-        dir("lib").containing_exactly(
-          file("my_project.rb"),
-          dir("my_project").containing_exactly(
-            file("version.rb", content: include('VERSION = "0.1.0"'), size: be < 1000)
-          )
-        ),
-        no_dir_named('tmp')
-      )
-    )
-  end
+RSpec.configure do |config|
+  config.include RSpec::PathMatchers
 end
+```
+
+## Usage
+
+### Basic Assertions
+
+In their simplest forms, the `be_dir`, `be_file`, and `be_symlink` matchers **verify
+the existence and type** of the given path. Each also supports negative expectations.
+
+```ruby
+# Check for existence and type
+expect('/tmp/new_project').to be_dir
+
+# Check for absence
+expect('/tmp/new_project').not_to be_file
+```
+
+### Attribute Assertions
+
+All top-level and nested matchers can take options as a hash to assert on specific
+file attributes. The value of each option can be an RSpec matcher or a literal value.
+
+```ruby
+expect('config.yml').to be_file(content: include('production'), size: be < 1000)
+
+expect('app.sock').to be_symlink(target: '/var/run/app.sock')
+```
+
+### Directory Content & Nested Assertions
+
+The real power comes from describing the contents of a directory. The `#containing`
+method asserts that a directory contains at least the specified entries, while
+`#containing_exactly` asserts that it has exactly those entries and no others.
+
+These expectations can be nested to any depth to describe a complete directory tree.
+
+```ruby
+expect('/var/www').to(
+  be_dir.containing(
+    file('index.html', mode: '0644'),
+    dir('assets').containing_exactly(
+      file('app.js'),
+      file('style.css')
+    ),
+    no_file_named('config.php') # Assert that an entry does not exist
+  )
+)
+```
+
+Methods available as arguments to the containing methods include `dir`, `file`,
+`symlink`, `no_file_named`, `no_dir_named`, and `no_symlink_named`.
+
+### Clear Failure Messages
+
+When an expectation is not met, this library gives well-formatted, easy-to-diagnose
+error messages. If the index.html file from the previous example had the wrong
+permissions AND style.css did not exist, the error would be:
+
+```text
+'/var/www' was not as expected:
+  - index.html
+      expected mode to be '0644', but it was '0600'
+  - assets/style.css
+      expected it to exist
+```
+
+### Available Options
+
+Here is a list of all options that can be given to the matchers in this gem:
+
+```ruby
+mode:         <matcher|String>,
+size:         <matcher|Integer>, # only for file matchers
+
+# Owner and group require a Unix-like platform that supports the Etc module.
+owner:        <matcher|String>,
+group:        <matcher|String>,
+
+# See `File.birthtime`, `File.atime`, etc. for platform support
+birthtime:    <matcher|Time|DateTime>,
+atime:        <matcher|Time|DateTime>,
+ctime:        <matcher|Time|DateTime>,
+mtime:        <matcher|Time|DateTime>,
+
+# Content matchers are only for file matchers
+content:      <matcher|String|Regexp>,
+json_content: <matcher|true>,
+yaml_content: <matcher|true>
+
+# Target matchers are only for symlink matchers
+target:       <matcher|String>
+target_type:  <matcher|String|Symbol> # e.g., 'file', 'directory'
+target_exist: <matcher|true|false>
 ```
 
 ## Added Value Over Standard RSpec Matchers
@@ -81,7 +185,7 @@ With this API (Declarative Style):
 ```ruby
 # This code describes the WHAT. The implementation details are hidden.
 # It reads like a specification document.
-expect('/var/www/html').to have_file('index.html', mode: '0644', owner: 'httpd')
+expect('/var/www/html/index.html').to be_file(mode: '0644', owner: 'httpd')
 ```
 
 This hides the complex, imperative logic inside the matcher and exposes a clean,
@@ -106,9 +210,9 @@ expect(JSON.parse(File.read(path))['status']).to eq('complete')
 With this API:
 
 ```ruby
-expect('/var/data').to have_file('status.json',
+expect('/var/data/status.json').to be_file(
     size: be > 0,
-    content: not(/error/),
+    content: not_to(match(/error/)),
     json_content: include('status' => 'complete')
 )
 ```
@@ -180,251 +284,10 @@ expect('config').to(
 ```
 
 ```text
-'/tmp/d20250622-12345-abcdef/my-app' was expected to satisfy the following but did not:
-- have directory "config" containing:
-    - have file "database.yml" with owner "db_user" and mode "0600"
-    - expected owner to be "db_user", but was "root"
-    - expected mode to be "0600", but was "0644"
-```
-
-## Installation
-
-Add this line to your application's `Gemfile` in the `:test` or `:development` group:
-
-```ruby
-group :test, :development do
-  gem 'rspec-path_matchers'
-end
-```
-
-And then execute:
-
-```bash
-$ bundle install
-```
-
-Or install it yourself as:
-
-```bash
-$ gem install rspec-path_matchers
-```
-
-## Setup
-
-Require the gem in your `spec/spec_helper.rb` file:
-
-```ruby
-# spec/spec_helper.rb
-require 'rspec/path_matchers'
-```
-
-## Usage And Examples
-
-All matchers operate on a base path, making your tests clean and portable.
-
-### Basic Assertions
-
-At its simplest, you can check for the existence of files and directories.
-
-```ruby
-it "creates the basic structure" do
-  # Setup: Create some files and directories in our temp dir
-  FileUtils.mkdir_p(File.join(@tmpdir, "app/models"))
-  FileUtils.touch(File.join(@tmpdir, "config.yml"))
-
-  # Assertions
-  expect(@tmpdir).to have_file("config.yml")
-  expect(@tmpdir).to have_dir("app")
-end
-```
-
-### Negative Assertions (Checking for Absence)
-
-You can use `not_to` to ensure that a file, directory, or symlink of a specific
-type does not exist.
-
-- `not_to have_file` passes if the entry is a directory, a symlink, or non-existent.
-- `not_to have_dir` passes if the entry is a file, a symlink, or non-existent.
-- `not_to have_symlink` passes if the entry is a file, a directory, or non-existent.
-
-**Important:** Negative matchers cannot be given options (`:mode`, `:content`, etc.)
-or blocks.
-
-```ruby
-it "can check for the absence of entries" do
-  # Setup
-  Dir.mkdir(File.join(@tmpdir, "existing_dir"))
-  File.write(File.join(@tmpdir, "existing_file.txt"), "content")
-
-  # Assert that a path that doesn't exist fails all checks
-  expect(@tmpdir).not_to have_file("non_existent.txt")
-  expect(@tmpdir).not_to have_dir("non_existent_dir")
-  expect(@tmpdir).not_to have_symlink("non_existent_link")
-
-  # Assert that an existing directory is NOT a file or symlink
-  expect(@tmpdir).not_to have_file("existing_dir")
-  expect(@tmpdir).not_to have_symlink("existing_dir")
-  # expect(@tmpdir).not_to have_dir("existing_dir") # This would fail
-
-  # Assert that an existing file is NOT a directory or symlink
-  expect(@tmpdir).not_to have_dir("existing_file.txt")
-  expect(@tmpdir).not_to have_symlink("existing_file.txt")
-  # expect(@tmpdir).not_to have_file("existing_file.txt") # This would fail
-end
-```
-
-### File Content Assertions
-
-Go beyond existence and inspect what's inside a file.
-
-```ruby
-before do
-  File.write(File.join(@tmpdir, "app.log"), "INFO: User logged in\nWARN: Low disk space")
-  File.write(File.join(@tmpdir, "config.json"), '{"theme":"dark","version":2}')
-  FileUtils.touch(File.join(@tmpdir, "empty.file"))
-end
-
-it "validates file content" do
-  # Check for content with a string or regex
-  expect(@tmpdir).to have_file("app.log", content: "INFO: User logged in")
-  expect(@tmpdir).to have_file("app.log", content: /WARN:.*space/)
-
-  # Check for the absence of content
-  expect(@tmpdir).to have_file("app.log", content: not(/ERROR/))
-
-  # Check if a file is empty
-  expect(@tmpdir).to have_file("empty.file", size: 0)
-
-  # Check for valid JSON and match its structure
-  expect(@tmpdir).to have_file("config.json", json_content: {
-    "theme" => "dark",
-    "version" => an_instance_of(Integer)
-  })
-end
-```
-
-### Attribute Assertions
-
-Matcher options allow detailed expectations on files, directories, and symlinks. Here
-are the options available on the three top level matchers:
-
-```ruby
-expect(path).to have_file(
-  name, mode:, owner:, group:, ctime:, mtime:, size:, content:, json_content:, yaml_content:,
-)
-
-expect(path).to have_dir(
-  name, mode:, owner:, group:, ctime:, mtime:, exact:
-)
-
-expect(path).to have_symlink(
-  name, mode:, owner:, group:, ctime:, mtime:, target:, target_type:, target_exist:
-)
-```
-
-Here is a detailed example of using options:
-
-```ruby
-before do
-  # Create a script, a secret key, and a symlink
-  script_path = File.join(@tmpdir, "deploy.sh")
-  File.write(script_path, "#!/bin/bash\n...")
-  FileUtils.chmod(0755, script_path)
-
-  key_path = File.join(@tmpdir, "secret.key")
-  File.write(key_path, "KEY_DATA")
-  FileUtils.chmod(0600, key_path)
-
-  FileUtils.ln_s("deploy.sh", File.join(@tmpdir, "latest_script"))
-end
-
-it "validates file attributes" do
-  # A single file can have many attributes checked at once
-  expect(@tmpdir).to have_file("deploy.sh", mode: "0755", size: be > 10)
-
-  # On Unix systems, you can check ownership
-  current_user = Etc.getlogin
-  expect(@tmpdir).to have_file("secret.key", owner: current_user, mode: "0600")
-
-  # Check symlinks and their targets
-  expect(@tmpdir).to have_symlink("latest_script", target: "deploy.sh")
-end
-```
-
-### Directory Structure Assertions
-
-The block syntax is the most powerful feature. It allows you to describe and verify
-an entire file tree, including both the presence and *absence* of entries using
-methods like `no_dir_named`, `no_file_named`, and `no_symlink_named`.
-
-```ruby
-before do
-  # Generate a complex directory structure
-  app_dir = File.join(@tmpdir, "my-app")
-  FileUtils.mkdir_p(File.join(app_dir, "bin"))
-  FileUtils.mkdir_p(File.join(app_dir, "config"))
-  FileUtils.mkdir_p(File.join(app_dir, "log"))
-
-  File.write(File.join(app_dir, "bin/run"), "#!/bin/bash")
-  FileUtils.chmod(0755, File.join(app_dir, "bin/run"))
-
-  File.write(File.join(app_dir, "config/database.yml"), "adapter: postgresql")
-  FileUtils.ln_s("database.yml", File.join(app_dir, "config/db.yml"))
-end
-
-it "validates a nested directory structure" do
-  # Note the parentheses around the matcher and its block
-  expect(@tmpdir).to(have_dir("my-app") do
-    # Assert on the 'bin' directory and its contents
-    dir "bin" do
-      file "run", mode: "0755", content: /bash/
-    end
-
-    # Assert on the 'config' directory and its contents
-    dir "config" do
-      file "database.yml"
-      symlink "db.yml", target: "database.yml"
-      no_file "secrets.yml" # Assert that a file is NOT present
-    end
-
-    # Assert that the 'log' directory is present and empty
-    dir "log"
-
-    # Assert the absence of other entries at the root of 'my-app'
-    no_dir_named "tmp"
-    no_file "README.md"
-  end)
-end
-```
-
-### Exact Directory Contents
-
-You can enforce that a directory contains *only* the entries defined in your
-specification block by using the `exact: true` option. This is perfect for testing
-generators or build scripts that should produce a clean, specific output without any
-extra files.
-
-If any undeclared entries are found on the PathMatchers, the matcher will fail.
-
-```ruby
-it "creates a directory with only the expected files" do
-  # Setup: Create a directory with an extra, unexpected file.
-  FileUtils.mkdir(File.join(@tmpdir, 'dist'))
-  File.write(File.join(@tmpdir, 'dist/app.js'), '// ...')
-  File.write(File.join(@tmpdir, 'dist/unexpected.log'), 'debug info')
-
-  # This test will fail because 'unexpected.log' was not declared.
-  expect(@tmpdir).to(
-    have_dir('dist', exact: true) do
-      file 'app.js'
-    end
-  )
-end
-
-# Failure Message:
-#
-# the entry 'dist' at '...' was expected to satisfy the following but did not:
-#   - did not expect entries ["unexpected.log"] to be present
+'config' was not as expected:
+  - database.xml
+      expected owner to be "db_user", but was "root"
+      expected mode to be "0600", but was "0644"
 ```
 
 ## Development

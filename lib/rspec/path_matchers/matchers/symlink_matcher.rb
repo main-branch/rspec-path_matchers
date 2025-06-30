@@ -5,8 +5,9 @@ require_relative 'base'
 module RSpec
   module PathMatchers
     module Matchers
-      # An RSpec matcher checks for the existence and properties of a file
-      class HaveSymlink < Base
+      # An RSpec matcher that checks for the existence and properties of a symlink
+      #
+      class SymlinkMatcher < Base
         OPTIONS = [
           RSpec::PathMatchers::Options::SymlinkAtime,
           RSpec::PathMatchers::Options::SymlinkBirthtime,
@@ -27,15 +28,17 @@ module RSpec
 
         protected
 
-        def validate_existance(failure_messages)
+        def validate_existance
           return nil if File.symlink?(path)
 
-          failure_messages <<
+          message =
             if File.exist?(path)
               'expected it to be a symlink'
             else
               'expected it to exist'
             end
+
+          add_failure(message, failures)
         end
       end
     end

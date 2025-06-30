@@ -17,7 +17,7 @@ module RSpec
         # For example, if the option key is `:owner`, then it could be used like this:
         #
         # ```ruby
-        # expect(path).to have_file(owner: 'alice')
+        # expect(path).to be_file(owner: 'alice')
         # ```
         #
         # @abstract
@@ -30,37 +30,37 @@ module RSpec
           raise NotImplementedError, 'Subclasses must implement Base.key'
         end
 
-        # Adds to `failure_messages` if the entry at path does not match the expectation
+        # Adds to `failures` if the entry at path does not match the expectation
         #
         # Entry is a file, directory, or symlink.
         #
         # You can assume that entry at path exists and is the expected type (file,
         # directory, or symlink).
         #
-        # This is the main method that the matcher (such as have_dir, have_file, or
-        # have_symlink) calls to run its check for an option.
+        # This is the main method that the matcher (such as be_dir, be_file, or
+        # be_symlink) calls to run its check for an option.
         #
         # @param path [String] the path of the entry to check
         #
         # @param expected [Object] the expected value to match against the entry
         #
-        # @param failure_messages [Array<String>] the array to append failure
-        # messages to (if any)
+        # @param failures [Array<RSpec::PathMatchers::Failure>] the array to append
+        # failure objects to (if any)
         #
         # @return [void]
         #
         # @api public
         #
-        def self.match(path, expected, failure_messages)
-          actual = fetch_actual(path, failure_messages)
+        def self.match(path, expected, failures)
+          actual = fetch_actual(path, failures)
           return if actual == FETCH_ERROR
         rescue NotImplementedError
           RSpec.configuration.reporter.message(not_supported_message(path))
         else
           if RSpec::PathMatchers.matcher?(expected)
-            match_matcher(actual, expected, failure_messages)
+            match_matcher(actual, expected, failures)
           else
-            match_literal(actual, expected, failure_messages)
+            match_literal(actual, expected, failures)
           end
         end
 
@@ -81,7 +81,7 @@ module RSpec
 
         # Adds to `errors` if the value of `expected` is not valid for this option type
         #
-        # The matcher (such as `have_dir`, `have_file`, or `have_symlink` calls this
+        # The matcher (such as `be_dir`, `be_file`, or `be_symlink`) calls this
         # method to validate the expected value before running the matcher.
         #
         # It checks that the expected value is a RSpec matcher or one of the types
@@ -117,21 +117,21 @@ module RSpec
         #
         # @param path [String] the path of the entry to check
         #
-        # @param failure_messages [Array<String>] the array to append failure
-        # messages to (if any)
+        # @param failures [Array<RSpec::PathMatchers::Failure>] the array to append
+        # failure objects to (if any)
         #
         # @return [Object, FETCH_ERROR] the actual value of the entry at path or FETCH_ERROR
         #
         # @api protected
         #
-        private_class_method def self.fetch_actual(path, failure_messages)
+        private_class_method def self.fetch_actual(path, failures)
           raise NotImplementedError, 'Subclasses must implement Base.fetch_actual'
         end
 
         # The valid types (in addition to an RSpec matcher) for the option value
         #
         # For instance, if the option key is `:owner`, then the option value could be
-        # a `String` specifying the owner name as in `have_file(owner: 'alice')`.
+        # a `String` specifying the owner name as in `be_file(owner: 'alice')`.
         #
         # @example specify that only an RSpec matcher is allowed
         #   def self.valid_expected_types = []
@@ -219,7 +219,7 @@ module RSpec
           "expected #{key} to be #{expected.inspect}, but was #{actual.inspect}"
         end
 
-        # Add to `failure_messages` if actual value matches the normalized expected value
+        # Add to `failures` if actual value matches the normalized expected value
         #
         # This is called when expected is not an RSpec matcher.
         #
@@ -230,21 +230,27 @@ module RSpec
         #
         # @param expected [Object] the expected literal value to match against
         #
-        # @param failure_messages [Array<String>] the array to append failure messages to
+        # @param failures [Array<RSpec::PathMatchers::Failure>] the array to append
+        # failure objects to (if any)
         #
         # @return [void]
         #
         # @api protected
         #
-        private_class_method def self.match_literal(actual, expected, failure_messages)
+        private_class_method def self.match_literal(actual, expected, failures)
           expected = normalize_expected_literal(expected)
 
           return if literal_match?(actual, expected)
 
-          failure_messages << literal_failure_message(actual, expected)
+          message = literal_failure_message(actual, expected)
+          add_failure(message, failures)
         end
 
-        # Add to `failure_messages` if actual value matches the normalized expected value
+        private_class_method def self.add_failure(message, failures)
+          failures << RSpec::PathMatchers::Failure.new('.', message)
+        end
+
+        # Add to `failures` if actual value matches the normalized expected value
         #
         # This is called when expected is an RSpec matcher.
         #
@@ -255,16 +261,18 @@ module RSpec
         #
         # @param expected [RSpec::Matchers::Matcher] the expected matcher to match against
         #
-        # @param failure_messages [Array<String>] the array to append failure messages to
+        # @param failures [Array<RSpec::PathMatchers::Failure>] the array to append
+        # failure objects to (if any)
         #
         # @return [void]
         #
         # @api protected
         #
-        private_class_method def self.match_matcher(actual, expected, failure_messages)
+        private_class_method def self.match_matcher(actual, expected, failures)
           return if expected.matches?(actual)
 
-          failure_messages << "expected #{key} to #{expected.description}, but was #{actual.inspect}"
+          message = "expected #{key} to #{expected.description}, but was #{actual.inspect}"
+          add_failure(message, failures)
         end
 
         # Warning message for unsupported expectations

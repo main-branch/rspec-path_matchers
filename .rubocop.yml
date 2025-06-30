@@ -11,5 +11,10 @@ Metrics/AbcSize:
     - "spec/spec_helper.rb"
     - "spec/**/*_spec.rb"
 
+Metrics/ParameterLists:
+  Exclude:
+    - "spec/spec_helper.rb"
+    - "spec/**/*_spec.rb"
+
 AllCops:
   TargetRubyVersion: 3.2

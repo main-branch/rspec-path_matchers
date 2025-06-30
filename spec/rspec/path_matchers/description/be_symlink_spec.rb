@@ -3,8 +3,8 @@
 require 'spec_helper'
 require 'rspec/path_matchers'
 
-RSpec.describe 'have_symlink.description' do
-  let(:matcher) { have_symlink('a.link', **options) }
+RSpec.describe 'be_symlink.description' do
+  let(:matcher) { symlink('a.link', **options) }
   subject(:description) { matcher.description }
 
   context 'with no options' do
