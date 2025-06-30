@@ -8,7 +8,7 @@ module RSpec
       # content: <expected>
       class Content < Base
         def self.key = :content
-        def self.fetch_actual(path, _failure_messages) = File.read(path)
+        def self.fetch_actual(path, _failures) = File.read(path)
         def self.valid_expected_types = [String, Regexp]
 
         def self.literal_match?(actual, expected)

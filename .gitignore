@@ -19,3 +19,5 @@ rubocop-report.json
 
 node_modules
 package-lock.json
+
+*.erb

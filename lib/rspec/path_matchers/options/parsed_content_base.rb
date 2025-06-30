@@ -9,22 +9,43 @@ module RSpec
       class ParsedContentBase < Base
         def self.valid_expected_types = [TrueClass]
 
-        def self.fetch_actual(path, failure_messages)
+        # Reads and parses the file content
+        #
+        # This method will rescue any parsing errors (e.g., `JSON::ParserError`)
+        # and add a descriptive failure instead of crashing.
+        #
+        # @param (see RSpec::PathMatchers::Options::Base.fetch_actual)
+        #
+        # @return [Object, FETCH_ERROR] The parsed content (e.g., a Hash) or FETCH_ERROR.
+        #
+        def self.fetch_actual(path, failures)
           parse(File.read(path))
         rescue parsing_error => e
-          failure_messages << "expected valid #{content_type} content, but got error: #{e.message}"
+          message = "expected valid #{content_type} content, but got error: #{e.message}"
+          add_failure(message, failures)
           FETCH_ERROR
         end
 
-        # This is the `xxxx_content: true` case. A successful fetch_actual is sufficient.
-        def self.match_literal(_actual, _expected, _failure_messages); end
+        # This is the `xxxx_content: true` case. A successful fetch_actual is sufficient
+        def self.match_literal(_actual, _expected, _failures); end
 
-        def self.match_matcher(actual, expected, failure_messages)
+        # Compares the parsed content against the given RSpec matcher.
+        #
+        # @param (see RSpec::PathMatchers::Options::Base.match_matcher)
+        #
+        # @return [void]
+        #
+        def self.match_matcher(actual, expected, failures)
           return if expected.matches?(actual)
 
-          failure_messages << "expected #{content_type} content to #{expected.description}"
+          message = "expected #{content_type} content to #{expected.description}"
+          add_failure(message, failures)
         end
 
+        # Provides a human-readable description for the option
+        #
+        # Returns a special message for the `json_content: true` case.
+        #
         def self.description(expected)
           expected == true ? "be #{content_type.downcase} content" : super
         end

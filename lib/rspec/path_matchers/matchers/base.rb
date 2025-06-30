@@ -26,7 +26,7 @@ module RSpec
         # @param entry_name [String] The name of the entry to match against
         #
         #   - If entry_name is empty, the matcher will match against the base_path
-        #     directly
+        #     directly (this is the path passed to `matches?` or `does_not_match?`).
         #   - If entry_name is NOT empty, the matcher will match against
         #     File.join(base_path, entry_name)
         #
@@ -41,7 +41,7 @@ module RSpec
           @entry_name = entry_name.to_s
           @matcher_name = matcher_name
           @options = options_factory(*option_keys, **options_hash)
-          @failure_messages = []
+          @failures = []
         end
 
         # @attribute [r] options
@@ -76,16 +76,16 @@ module RSpec
         #
         attr_reader :matcher_name
 
-        # @attribute [r] failure_messages
+        # @attribute [r] failures
         #
-        # An array of failure messages that describe why the matcher did not match
-        # the actual value
+        # An array of failures that describe why the matcher did not match the actual
+        # value
         #
         # Only populated after `matches?` or `execute_match` is called
         #
-        # @return [Array<String>]
+        # @return [Array<RSpec::PathMatchers::Failure>]
         #
-        attr_reader :failure_messages
+        attr_reader :failures
 
         # @attribute [r] entry_name
         #
@@ -103,15 +103,14 @@ module RSpec
 
         # A human-readable description of the matcher's expectation
         #
-        # This is used by RSpec to build the failure message when an `expect(...).to`
-        # expectation is not met. For example, if a test asserts `expect(path).to
-        # have_file("foo")` and the file does not exist, the failure message will
-        # include the output of this method: "expected to have file \"foo\"".
+        # This description is used by RSpec formatters (e.g., `--format
+        # documentation`) to provide output about the specification itself. It is NOT
+        # used to build the detailed failure message when an expectation fails.
         #
         # Subclasses can override this method to add to or provide a more specific
         # description based on the entry type, options, or other factors.
         #
-        # @return [String] A description of the matcher
+        # @return [String]
         #
         def description
           desc = (@entry_name.empty? ? "be a #{entry_type}" : "have #{entry_type} #{entry_name.inspect}")
@@ -122,7 +121,7 @@ module RSpec
 
         # Returns `true` if the matcher matches the actual value
         #
-        # If `false` is returned, the `failure_messages` array will be populated with
+        # If `false` is returned, the `failures` array will be populated with
         # human-readable error messages that describe why the match failed.
         #
         # @param base_path [Object] The base_path together with entry_name determine the actual value
@@ -142,14 +141,14 @@ module RSpec
         end
 
         def failure_message
-          header = "the entry '#{entry_name}' at '#{base_path}' was expected to satisfy the following but did not:"
-          # Format single- and multi-line nested messages with proper indentation.
-          messages = failure_messages.map do |msg|
-            msg.lines.map.with_index do |line, i|
-              i.zero? ? "  - #{line.chomp}" : "    #{line.chomp}"
-            end.join("\n")
-          end.join("\n")
-          "#{header}\n#{messages}"
+          header = "#{path} was not as expected:"
+          grouped_failures = failures.group_by(&:relative_path)
+
+          messages = grouped_failures.map do |relative_path, failures_for_path|
+            format_failure_group(relative_path, failures_for_path)
+          end
+
+          "#{header}\n#{messages.join("\n")}"
         end
 
         # This method is called by RSpec for `expect(...).not_to have_...`
@@ -179,9 +178,9 @@ module RSpec
         # Add to `errors` if the matcher is not defined correctly
         #
         # Subclasses may override this method to provide additional checking. For
-        # instance, HaveDirectory extends this to add validation for nested matchers.
+        # instance, BeDirectory extends this to add validation for nested matchers.
         #
-        # A nesting matcher (such as HaveDirectory) may call this method on the
+        # A nesting matcher (such as BeDirectory) may call this method on the
         # nested matchers to collect all validation errors before raising an
         # ArgumentError.
         #
@@ -199,8 +198,8 @@ module RSpec
         # Returns `true` if `path` exists and is of the correct type for this matcher
         #
         # Subclasses must implement this method to check the type of the entry. For
-        # example, HaveFile checks if the path is a regular file; HaveDirectory, a
-        # directory; and HaveSymlink, a symlink.
+        # example, BeFile checks if the path is a regular file; BeDirectory, a
+        # directory; and BeSymlink, a symlink.
         #
         # @return [Boolean]
         #
@@ -243,26 +242,45 @@ module RSpec
         # This method assumes that collect_validation_errors has already been called
         # and passed.
         #
-        # This method is protected so that container matchers (like HaveDirectory)
+        # This method is protected so that container matchers (like BeDirectory)
         # can call it on nested matchers without using .send.
         #
         def execute_match(base_path) # rubocop:disable Naming/PredicateMethod
-          # It is important to reset failure_messages in case this matcher is reused
-          @failure_messages = []
+          # It is important to reset failures in case this matcher is reused
+          @failures = []
 
           @base_path = base_path.to_s
           @path = @entry_name.empty? ? base_path : File.join(base_path, entry_name)
 
           # Validate existence and type.
-          validate_existance(failure_messages)
-          return false if failure_messages.any?
+          validate_existance
+          return false if failures.any?
 
           # Validate specific options and nested expectations.
           validate_options
-          failure_messages.empty?
+          failures.empty?
         end
 
         private
+
+        # Formats a group of failures for a single relative path.
+        #
+        # @param relative_path [String] The path of the failure relative to the subject.
+        # @param failures_for_path [Array<Failure>] A list of failures for that path.
+        # @return [String] A formatted string block for this group of failures.
+        #
+        def format_failure_group(relative_path, failures_for_path)
+          indented_errors = failures_for_path.map { |f| "      #{f.message}" }.join("\n")
+
+          if relative_path == '.'
+            # For failures on the subject itself, just show the indented errors.
+            indented_errors
+          else
+            # For failures on a child, show the path and then the indented errors.
+            path_line = "  - #{relative_path}"
+            "#{path_line}\n#{indented_errors}"
+          end
+        end
 
         def build_options_description
           descriptions = options.to_h.filter_map do |key, value|
@@ -306,22 +324,26 @@ module RSpec
           end
         end
 
-        def validate_existance(_failure_messages)
+        def validate_existance
           raise NotImplementedError, 'Subclasses must implement Base#validate_existance'
         end
 
         # Validate the options for the current matcher
         #
         # Subclasses may override this to add additional validation logic. For
-        # instance, HaveDirectory extends this to check nested matchers.
+        # instance, BeDirectory extends this to check nested matchers.
         #
         def validate_options
           options.members.each do |key|
             expected = options.send(key)
             next if expected == RSpec::PathMatchers::Options::NOT_GIVEN
 
-            option_definition(key).match(path, expected, failure_messages)
+            option_definition(key).match(path, expected, failures)
           end
+        end
+
+        def add_failure(message, failures)
+          failures << RSpec::PathMatchers::Failure.new('.', message)
         end
       end
     end

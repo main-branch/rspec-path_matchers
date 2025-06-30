@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
-RSpec.describe RSpec::PathMatchers::Matchers::HaveNoEntry do
-  let(:matcher) { described_class.new(name, entry_type:) }
+RSpec.describe 'have_no_entry.description' do
+  let(:matcher) { RSpec::PathMatchers::Matchers::NoEntryMatcher.new(name, matcher_name:, entry_type:) }
+  let(:matcher_name) { 'have_no_entry' }
 
   describe '#description' do
     subject { matcher.description }

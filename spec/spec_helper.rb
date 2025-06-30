@@ -51,6 +51,50 @@ RSpec.shared_examples 'an abstract method' do
   end
 end
 
+def mocked_now
+  @mocked_now ||= Time.new(1967, 3, 15, 0, 16, 0, '-0700').freeze
+end
+
+def mock_user_name(uid, name)
+  allow(Etc).to receive(:getpwuid).with(uid).and_return(double(name:))
+end
+
+def mock_group_name(gid, name)
+  allow(Etc).to receive(:getgrgid).with(gid).and_return(double(name:))
+end
+
+def mock_file_stat(
+  path,
+  atime: mocked_now, birthtime: mocked_now, ctime: mocked_now, mtime: mocked_now,
+  uid: 9999, gid: 9999, mode: 0o644
+)
+  allow(File).to(
+    receive(:stat).with(path).and_return(
+      double(
+        atime:, birthtime:, ctime:, mtime:,
+        uid:, gid:, mode:
+      )
+    )
+  )
+end
+
+def mock_file_lstat(
+  path,
+  atime: mocked_now, birthtime: mocked_now, ctime: mocked_now, mtime: mocked_now,
+  uid: 9999, gid: 9999, mode: 0o644
+)
+  allow(File).to(
+    receive(:lstat).with(path).and_return(
+      double(
+        atime:, birthtime:, ctime:, mtime:,
+        uid:, gid:, mode:
+      )
+    )
+  )
+end
+
+def expectation_not_met_error = RSpec::Expectations::ExpectationNotMetError
+
 require 'simplecov-rspec'
 
 SimpleCov.enable_coverage :branch

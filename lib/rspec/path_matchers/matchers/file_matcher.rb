@@ -6,7 +6,8 @@ module RSpec
   module PathMatchers
     module Matchers
       # An RSpec matcher checks for the existence and properties of a file
-      class HaveFile < Base
+      #
+      class FileMatcher < Base
         OPTIONS = [
           RSpec::PathMatchers::Options::Atime,
           RSpec::PathMatchers::Options::Birthtime,
@@ -29,15 +30,17 @@ module RSpec
 
         protected
 
-        def validate_existance(failure_messages)
+        def validate_existance
           return nil if File.file?(path)
 
-          failure_messages <<
+          message =
             if File.exist?(path)
               'expected it to be a regular file'
             else
               'expected it to exist'
             end
+
+          add_failure(message, failures)
         end
       end
     end

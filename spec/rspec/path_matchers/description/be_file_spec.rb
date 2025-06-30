@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-RSpec.describe 'have_file.description' do
-  let(:matcher) { have_file('file.txt', **options) }
+RSpec.describe 'be_file.description' do
+  let(:matcher) { file('file.txt', **options) }
   subject(:description) { matcher.description }
 
   context 'with no options' do

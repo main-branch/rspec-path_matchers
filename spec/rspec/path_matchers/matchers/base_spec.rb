@@ -18,8 +18,8 @@ RSpec.describe RSpec::PathMatchers::Matchers::Base do
     end
 
     describe '.validate_existance' do
-      let(:failure_messages) { double('failure_messages') }
-      subject { base_matcher.send(:validate_existance, failure_messages) }
+      let(:failures) { double('failures') }
+      subject { base_matcher.send(:validate_existance) }
       it_behaves_like 'an abstract method'
     end
   end

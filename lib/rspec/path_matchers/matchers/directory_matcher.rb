@@ -1,13 +1,14 @@
 # frozen_string_literal: true
 
 require_relative 'base'
+require 'pathname'
 
 module RSpec
   module PathMatchers
     module Matchers
       # An RSpec matcher that checks for the existence and properties of a directory
       #
-      class HaveDirectory < Base
+      class DirectoryMatcher < Base
         OPTIONS = [
           RSpec::PathMatchers::Options::Atime,
           RSpec::PathMatchers::Options::Birthtime,
@@ -17,28 +18,6 @@ module RSpec
           RSpec::PathMatchers::Options::Mtime,
           RSpec::PathMatchers::Options::Owner
         ].freeze
-
-        def entry_type = :directory
-
-        # An array of nested matchers that define the expected contents of the
-        # directory
-        #
-        # One element is added to the @nested_matchers array for each call to
-        # `containing` or `containing_exactly`. Since `containing` or
-        # `containing_exactly` are allowed only once per matcher, an error will be
-        # logged during validation if the size of this array is greater than one.
-        #
-        # Each element in @nested_matchers is itself an array of the matchers given
-        # in each `containing` or `containing_exactly` call.
-        #
-        # This method returns the first element of @nested_matchers (or an empty
-        # array of @nested_matchers is itself empty).
-        #
-        # @return [Array<Array<RSpec::PathMatchers::Matchers::Base>>]
-        #
-        def nested_matchers
-          @nested_matchers.first || []
-        end
 
         # @attribute [r] exact
         #
@@ -52,15 +31,13 @@ module RSpec
 
         # Initializes the matcher with the directory name and options
         #
-        # @param name [String] The name of the directory
+        # @param entry_name [String] The name of the directory relative to the subject or empty
         #
-        # @param exact [Boolean] The directory must contain only entries declared in the specification block
+        # @param matcher_name [Symbol] The name of the DSL method used to create this matcher
         #
         # @param options_hash [Hash] A hash of attribute matchers (e.g., mode:, owner:)
         #
-        # @param specification_block [Proc] A specification block that defines the expected directory contents
-        #
-        def initialize(name, **options_hash)
+        def initialize(entry_name, matcher_name:, **options_hash)
           super
 
           @exact = false
@@ -92,6 +69,10 @@ module RSpec
           "#{desc} containing#{' exactly' if exact}:\n  #{nested_descriptions.join("\n  ")}"
         end
 
+        def entry_type = :directory
+        def option_definitions = OPTIONS
+        def correct_type? = File.directory?(path)
+
         def collect_negative_validation_errors(errors)
           super
           return unless nested_matchers.any?
@@ -110,38 +91,67 @@ module RSpec
           nested_matchers.each { |matcher| matcher.collect_validation_errors(errors) }
         end
 
-        def option_definitions = OPTIONS
-        def correct_type? = File.directory?(path)
-
         protected
 
         # Overrides Base to add the exactness check after other validations.
         def validate_options
-          super # Validate this directory's own options first.
+          # Validate this directory's own options (mode, owner, etc.)
+          super
 
-          nested_matchers.each do |matcher|
-            failure_messages << matcher.failure_message unless matcher.execute_match(path)
-          end
+          # Validate the nested entries described in `containing`
+          validate_nested_matchers
 
-          # If any of the declared expectations failed, we stop here.
-          # The user needs to fix those first.
-          return unless failure_messages.empty?
+          return unless failures.empty?
 
+          # If using `containing_exactly`, check for unexpected entries
           check_for_unexpected_entries if exact
         end
 
-        def validate_existance(failure_messages)
+        def validate_existance
           return if File.directory?(path)
 
-          failure_messages << (File.exist?(path) ? 'expected it to be a directory' : 'expected it to exist')
+          message = (File.exist?(path) ? 'expected it to be a directory' : 'expected it to exist')
+          add_failure(message, failures)
         end
 
         private
 
+        # This new private method encapsulates the logic for checking children.
+        def validate_nested_matchers
+          nested_matchers.each do |matcher|
+            next if matcher.execute_match(path)
+
+            matcher.failures.each do |failure|
+              new_relative_path = (Pathname.new(matcher.entry_name) + Pathname.new(failure.relative_path)).to_s
+              failures << RSpec::PathMatchers::Failure.new(new_relative_path, failure.message)
+            end
+          end
+        end
+
+        # An array of nested matchers that define the expected contents of the
+        # directory
+        #
+        # One element is added to the @nested_matchers array for each call to
+        # `containing` or `containing_exactly`. Since `containing` or
+        # `containing_exactly` are allowed only once per matcher, an error will be
+        # logged during validation if the size of this array is greater than one.
+        #
+        # Each element in @nested_matchers is itself an array of the matchers given
+        # in each `containing` or `containing_exactly` call.
+        #
+        # This method returns the first element of @nested_matchers (or an empty
+        # array of @nested_matchers is itself empty).
+        #
+        # @return [Array<RSpec::PathMatchers::Matchers::Base>]
+        #
+        def nested_matchers
+          @nested_matchers.first || []
+        end
+
         # Checks for any files/directories on disk that were not declared in the block.
         def check_for_unexpected_entries
           positively_declared_entries = nested_matchers.reject do |m|
-            m.is_a?(RSpec::PathMatchers::Matchers::HaveNoEntry)
+            m.is_a?(RSpec::PathMatchers::Matchers::NoEntryMatcher)
           end.map(&:entry_name)
 
           actual_entries = Dir.children(path)
@@ -150,11 +160,11 @@ module RSpec
           return if unexpected_entries.empty?
 
           message = build_unexpected_entries_message(unexpected_entries)
-          failure_messages << message
+          add_failure(message, failures)
         end
 
         def build_unexpected_entries_message(unexpected_entries)
-          "did not expect entries #{unexpected_entries.inspect} to be present"
+          "contained unexpected entries #{unexpected_entries.sort.inspect}"
         end
       end
     end
