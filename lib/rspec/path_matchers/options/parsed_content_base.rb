@@ -29,17 +29,16 @@ module RSpec
         # This is the `xxxx_content: true` case. A successful fetch_actual is sufficient
         def self.match_literal(_actual, _expected, _failures); end
 
-        # Compares the parsed content against the given RSpec matcher.
+        # Failure message for when a matcher is used (e.g., `json_content: include(...)`)
         #
         # @param (see RSpec::PathMatchers::Options::Base.match_matcher)
         #
         # @return [void]
         #
-        def self.match_matcher(actual, expected, failures)
-          return if expected.matches?(actual)
+        def self.matcher_failure_message(actual, expected)
+          actual_summary = actual.inspect.length > 100 ? 'it did not' : "was #{actual.inspect}"
 
-          message = "expected #{content_type} content to #{expected.description}"
-          add_failure(message, failures)
+          "expected #{content_type} content to #{expected.description}, but #{actual_summary}"
         end
 
         # Provides a human-readable description for the option

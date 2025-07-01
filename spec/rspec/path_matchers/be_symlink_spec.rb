@@ -187,7 +187,9 @@ RSpec.describe 'the be_symlink matcher' do
       let(:options) { { invalid_option: true } }
       it 'should raise an ArgumentError' do
         expected_message = /unknown keyword: :invalid_option/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -195,7 +197,9 @@ RSpec.describe 'the be_symlink matcher' do
       let(:options) { { invalid_option: true, another_invalid: false } }
       it 'should raise an ArgumentError listing all invalid options' do
         expected_message = /unknown keywords: :invalid_option, :another_invalid/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
   end
@@ -209,8 +213,10 @@ RSpec.describe 'the be_symlink matcher' do
       let(:expected_owner) { 123 }
 
       it 'should raise an ArgumentError' do
-        expected_message = /expected `owner:` to be a Matcher or String, but was 123/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `owner:` to be a Matcher or String, but it was 123/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -252,8 +258,10 @@ RSpec.describe 'the be_symlink matcher' do
           FileUtils.touch(path)
           mock_file_lstat(path, uid: 9999)
           mock_user_name(9999, actual_owner)
-          expected_message = /expected owner to be "testuser", but was "otheruser"/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected owner to be "testuser", but it was "otheruser"/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -279,8 +287,10 @@ RSpec.describe 'the be_symlink matcher' do
           FileUtils.touch(path)
           mock_file_lstat(path, uid: 9999)
           mock_user_name(9999, actual_owner)
-          expected_message = /expected owner to eq "testuser", but was "otheruser"/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected owner to eq "testuser", but it was "otheruser"/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -294,8 +304,10 @@ RSpec.describe 'the be_symlink matcher' do
     context 'when given an invalid group value' do
       let(:expected_group) { 123 }
       it 'should raise an ArgumentError' do
-        expected_message = /expected `group:` to be a Matcher or String, but was 123/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `group:` to be a Matcher or String, but it was 123/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -336,8 +348,10 @@ RSpec.describe 'the be_symlink matcher' do
           FileUtils.touch(path)
           mock_file_lstat(path, gid: 9999)
           mock_group_name(9999, actual_group)
-          expected_message = /expected group to be "testgroup", but was "othergroup"/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected group to be "testgroup", but it was "othergroup"/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -363,8 +377,10 @@ RSpec.describe 'the be_symlink matcher' do
           FileUtils.touch(path)
           mock_file_lstat(path, gid: 9999)
           mock_group_name(9999, actual_group)
-          expected_message = /expected group to eq "testgroup", but was "othergroup"/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected group to eq "testgroup", but it was "othergroup"/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -380,8 +396,10 @@ RSpec.describe 'the be_symlink matcher' do
 
       it 'should raise an ArgumentError' do
         FileUtils.touch(path)
-        expected_message = /expected `atime:` to be a Matcher, Time, or DateTime, but was "invalid"/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `atime:` to be a Matcher, Time, or DateTime, but it was "invalid"/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -404,8 +422,10 @@ RSpec.describe 'the be_symlink matcher' do
         it 'should fail' do
           FileUtils.touch(path)
           mock_file_lstat(path, atime: actual_atime)
-          expected_message = /expected atime to be #{expected_atime.inspect}, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected atime to be #{expected_atime.inspect}, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -429,8 +449,10 @@ RSpec.describe 'the be_symlink matcher' do
         it 'should fail' do
           FileUtils.touch(path)
           mock_file_lstat(path, atime: actual_atime)
-          expected_message = /expected atime to be 1967-03-15 00:16:00 -0700, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected atime to be 1967-03-15 00:16:00 -0700, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -454,8 +476,10 @@ RSpec.describe 'the be_symlink matcher' do
         it 'should fail' do
           FileUtils.touch(path)
           mock_file_lstat(path, atime: actual_atime)
-          expected_message = /expected atime to be within 10 of 1967-03-15 00:16:00.000000000 -0700, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected atime to be within 10 of 1967-03-15 00:16:00.000000000 -0700, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -485,8 +509,10 @@ RSpec.describe 'the be_symlink matcher' do
 
       it 'should raise an ArgumentError' do
         FileUtils.touch(path)
-        expected_message = /expected `birthtime:` to be a Matcher, Time, or DateTime, but was "invalid"/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `birthtime:` to be a Matcher, Time, or DateTime, but it was "invalid"/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -509,8 +535,10 @@ RSpec.describe 'the be_symlink matcher' do
         it 'should fail' do
           FileUtils.touch(path)
           mock_file_lstat(path, birthtime: actual_birthtime)
-          expected_message = /expected birthtime to be #{expected_birthtime.inspect}, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected birthtime to be #{expected_birthtime.inspect}, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -534,8 +562,10 @@ RSpec.describe 'the be_symlink matcher' do
         it 'should fail' do
           FileUtils.touch(path)
           mock_file_lstat(path, birthtime: actual_birthtime)
-          expected_message = /expected birthtime to be 1967-03-15 00:16:00 -0700, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected birthtime to be 1967-03-15 00:16:00 -0700, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -559,8 +589,10 @@ RSpec.describe 'the be_symlink matcher' do
         it 'should fail' do
           FileUtils.touch(path)
           mock_file_lstat(path, birthtime: actual_birthtime)
-          expected_message = /expected birthtime to be within 10 of 1967-03-15 00:16:00.000000000 -0700, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected birthtime to be within 10 of 1967-03-15 00:16:00.000000000 -0700, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -576,8 +608,10 @@ RSpec.describe 'the be_symlink matcher' do
 
       it 'should raise an ArgumentError' do
         FileUtils.touch(path)
-        expected_message = /expected `ctime:` to be a Matcher, Time, or DateTime, but was "invalid"/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `ctime:` to be a Matcher, Time, or DateTime, but it was "invalid"/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -600,8 +634,10 @@ RSpec.describe 'the be_symlink matcher' do
         it 'should fail' do
           FileUtils.touch(path)
           mock_file_lstat(path, ctime: actual_ctime)
-          expected_message = /expected ctime to be #{expected_ctime.inspect}, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected ctime to be #{expected_ctime.inspect}, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -625,8 +661,10 @@ RSpec.describe 'the be_symlink matcher' do
         it 'should fail' do
           FileUtils.touch(path)
           mock_file_lstat(path, ctime: actual_ctime)
-          expected_message = /expected ctime to be 1967-03-15 00:16:00 -0700, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected ctime to be 1967-03-15 00:16:00 -0700, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -650,8 +688,10 @@ RSpec.describe 'the be_symlink matcher' do
         it 'should fail' do
           FileUtils.touch(path)
           mock_file_lstat(path, ctime: actual_ctime)
-          expected_message = /expected ctime to be within 10 of 1967-03-15 00:16:00.000000000 -0700, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected ctime to be within 10 of 1967-03-15 00:16:00.000000000 -0700, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -667,8 +707,10 @@ RSpec.describe 'the be_symlink matcher' do
 
       it 'should raise an ArgumentError' do
         FileUtils.touch(path)
-        expected_message = /expected `mtime:` to be a Matcher, Time, or DateTime, but was "invalid"/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `mtime:` to be a Matcher, Time, or DateTime, but it was "invalid"/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -692,8 +734,10 @@ RSpec.describe 'the be_symlink matcher' do
           FileUtils.touch(path)
           mock_file_lstat(path, mtime: actual_mtime)
 
-          expected_message = /expected mtime to be #{expected_mtime.inspect}, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected mtime to be #{expected_mtime.inspect}, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -717,8 +761,10 @@ RSpec.describe 'the be_symlink matcher' do
         it 'should fail' do
           FileUtils.touch(path)
           mock_file_lstat(path, mtime: actual_mtime)
-          expected_message = /expected mtime to be 1967-03-15 00:16:00 -0700, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected mtime to be 1967-03-15 00:16:00 -0700, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -742,8 +788,10 @@ RSpec.describe 'the be_symlink matcher' do
         it 'should fail' do
           FileUtils.touch(path)
           mock_file_lstat(path, mtime: actual_mtime)
-          expected_message = /expected mtime to be within 10 of 1967-03-15 00:16:00.000000000 -0700, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected mtime to be within 10 of 1967-03-15 00:16:00.000000000 -0700, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -758,8 +806,10 @@ RSpec.describe 'the be_symlink matcher' do
       let(:expected_target) { 123 }
 
       it 'should raise an ArgumentError' do
-        expected_message = /expected `target:` to be a Matcher or String, but was 123/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `target:` to be a Matcher or String, but it was 123/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -777,8 +827,10 @@ RSpec.describe 'the be_symlink matcher' do
         let(:expected_target) { 'not_target_path' }
 
         it 'should fail' do
-          expected_message = /expected target to be "not_target_path", but was "#{target_path}"/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected target to be "not_target_path", but it was "#{target_path}"/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -798,8 +850,10 @@ RSpec.describe 'the be_symlink matcher' do
 
         it 'should fail' do
           FileUtils.touch(path)
-          expected_message = /expected target to eq "not_the_target", but was #{Regexp.escape(target_path.inspect)}/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected target to eq "not_the_target", but it was #{Regexp.escape(target_path.inspect)}/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -814,8 +868,10 @@ RSpec.describe 'the be_symlink matcher' do
       let(:expected_target_type) { 123 }
 
       it 'should raise an ArgumentError' do
-        expected_message = /expected `target_type:` to be a Matcher, String, or Symbol, but was 123/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `target_type:` to be a Matcher, String, or Symbol, but it was 123/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -828,7 +884,9 @@ RSpec.describe 'the be_symlink matcher' do
 
       it 'should fail' do
         expected_message = /expected the symlink target to exist/
-        expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+        expect { subject }.to raise_error(expectation_not_met_error) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -847,8 +905,10 @@ RSpec.describe 'the be_symlink matcher' do
         it 'should fail' do
           FileUtils.rm_rf(target_path)
           Dir.mkdir(target_path) # Create a directory instead of a file
-          expected_message = /expected target_type to be "file", but was "directory"/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected target_type to be "file", but it was "directory"/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -867,8 +927,10 @@ RSpec.describe 'the be_symlink matcher' do
         it 'should fail' do
           FileUtils.rm_rf(target_path)
           FileUtils.touch(target_path)
-          expected_message = /expected target_type to be "directory", but was "file"/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected target_type to be "directory", but it was "file"/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -889,8 +951,10 @@ RSpec.describe 'the be_symlink matcher' do
           FileUtils.rm_rf(target_path)
           File.symlink('/tmp', target_path) # Create a symlink to a directory
           regexp_str = Regexp.escape('/^(file|directory)$/')
-          expected_message = /expected target_type to match #{regexp_str}, but was "link"/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected target_type to match #{regexp_str}, but it was "link"/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -905,8 +969,10 @@ RSpec.describe 'the be_symlink matcher' do
       let(:expected_target_exist) { 123 }
 
       it 'should raise an ArgumentError' do
-        expected_message = /expected `target_exist:` to be a Matcher, TrueClass, or FalseClass, but was 123/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `target_exist:` to be a Matcher, TrueClass, or FalseClass, but it was 123/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -924,8 +990,10 @@ RSpec.describe 'the be_symlink matcher' do
       context 'when the expected target type does not match the actual target type' do
         it 'should fail' do
           FileUtils.rm_rf(target_path)
-          expected_message = /expected target_exist to be true, but was false/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected target_exist to be true, but it was false/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -944,8 +1012,10 @@ RSpec.describe 'the be_symlink matcher' do
       context 'when the expected target type does not match the actual target type' do
         it 'should fail' do
           FileUtils.rm_rf(target_path)
-          expected_message = /expected target_exist to equal true, but was false/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected target_exist to equal true, but it was false/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end

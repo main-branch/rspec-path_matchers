@@ -28,7 +28,7 @@ RSpec.describe 'failure messages' do
 
       expected_message = <<~MSG.chomp
         #{app_path} was not as expected:
-              expected mode to be "0755", but was "0700"
+              expected mode to be "0755", but it was "0700"
       MSG
       expect(matcher.failure_message).to eq(expected_message)
     end
@@ -48,7 +48,7 @@ RSpec.describe 'failure messages' do
       expected_message = <<~MSG.chomp
         #{app_path} was not as expected:
           - config.yml
-              expected content to be "environment: production", but was "environment: test"
+              expected content to be "environment: production", but it was "environment: test"
       MSG
       expect(matcher.failure_message).to eq(expected_message)
     end
@@ -72,8 +72,8 @@ RSpec.describe 'failure messages' do
       expected_message = <<~MSG.chomp
         #{bin_path} was not as expected:
           - setup
-              expected mode to be "0644", but was "0755"
-              expected owner to be "root", but was "testuser"
+              expected mode to be "0644", but it was "0755"
+              expected owner to be "root", but it was "testuser"
       MSG
       expect(matcher.failure_message).to eq(expected_message)
     end
@@ -112,10 +112,10 @@ RSpec.describe 'failure messages' do
       expected_message = <<~MSG.chomp
         #{base_dir} was not as expected:
           - bin/setup
-              expected mode to be "0644", but was "0755"
-              expected owner to be "root", but was "owner"
+              expected mode to be "0644", but it was "0755"
+              expected owner to be "root", but it was "owner"
           - lib/new_project/version.rb
-              expected content to include "VERSION = \\"0.1.1\\"", but was #{version_rb_content.inspect}
+              expected content to include "VERSION = \\"0.1.1\\"", but it was #{version_rb_content.inspect}
       MSG
       expect(matcher.failure_message).to eq(expected_message)
     end
@@ -135,7 +135,7 @@ RSpec.describe 'failure messages' do
 
       expected_message = <<~MSG.chomp
         #{dist_path} was not as expected:
-              contained unexpected entries ["unexpected.log"]
+              expected no other entries, but found ["unexpected.log"]
       MSG
       expect(matcher.failure_message).to eq(expected_message)
     end

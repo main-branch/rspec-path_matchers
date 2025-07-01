@@ -11,18 +11,28 @@ module RSpec
         def self.fetch_actual(path, _failures) = File.read(path)
         def self.valid_expected_types = [String, Regexp]
 
+        # Override to provide custom matching logic for regexp literals
         def self.literal_match?(actual, expected)
-          return expected.match?(actual) if expected.is_a?(Regexp)
+          expected.is_a?(Regexp) ? expected.match?(actual) : super
+        end
 
-          super
+        # Handles failures when a matcher is used (e.g., content: include('...'))
+        def self.matcher_failure_message(actual, expected)
+          actual_summary = actual.length > 100 ? 'did not' : "was #{actual.inspect}"
+          "expected content to #{expected.description}, but it #{actual_summary}"
         end
 
         def self.literal_failure_message(actual, expected)
-          if expected.is_a?(Regexp)
-            "expected content to match #{expected.inspect}, but got #{actual.inspect}"
-          else
-            super
-          end
+          verb = expected.is_a?(Regexp) ? 'match' : 'be'
+
+          actual_summary =
+            if actual.length > 100
+              verb == 'match' ? 'did not' : 'was not'
+            else
+              "was #{actual.inspect}"
+            end
+
+          "expected content to #{verb} #{expected.inspect}, but it #{actual_summary}"
         end
       end
     end
