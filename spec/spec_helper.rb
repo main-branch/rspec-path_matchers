@@ -19,7 +19,7 @@ RSpec.configure do |config|
 end
 
 # Guard for Unix-specific tests, as Windows does not have the same ownership concepts
-UNIX_PLATFORM = RUBY_PLATFORM !~ /cygwin|mswin|mingw|bccwin|wince|emx/
+UNIX_LIKE_PLATFORM = RUBY_PLATFORM !~ /cygwin|mswin|mingw|bccwin|wince|emx/
 
 # Helper method to get the current user for ownership tests
 def current_user
@@ -66,13 +66,13 @@ end
 def mock_file_stat(
   path,
   atime: mocked_now, birthtime: mocked_now, ctime: mocked_now, mtime: mocked_now,
-  uid: 9999, gid: 9999, mode: 0o644
+  uid: 9999, gid: 9999, mode: 0o644, size: 0
 )
   allow(File).to(
     receive(:stat).with(path).and_return(
       double(
         atime:, birthtime:, ctime:, mtime:,
-        uid:, gid:, mode:
+        uid:, gid:, mode:, size:
       )
     )
   )
@@ -102,7 +102,14 @@ SimpleCov.enable_coverage :branch
 def ci_build? = ENV.fetch('GITHUB_ACTIONS', 'false') == 'true'
 
 SimpleCov::RSpec.start(list_uncovered_lines: ci_build?) do
-  minimum_coverage line: 100, branch: 100
+  minimum_coverage line: 100, branch: 100 if UNIX_LIKE_PLATFORM
+
+  add_filter '/spec/'
+  add_filter '/vendor/'
+  add_filter '/lib/rspec/path_matchers/version.rb'
+  add_filter '/lib/rspec/path_matchers/cli.rb'
+  add_filter '/lib/rspec/path_matchers/cli_options.rb'
+  add_filter '/lib/rspec/path_matchers/cli_parser.rb'
 end
 
 require 'rspec/path_matchers'

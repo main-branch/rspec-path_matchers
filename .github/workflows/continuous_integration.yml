@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 # Supported platforms / Ruby versions:
-#  - Ubuntu: MRI (3.2, 3.3, 3.4), TruffleRuby (24), JRuby (9.4)
+#  - Ubuntu: MRI (3.2, 3.3, 3.4)
 #  - Windows: MRI (3.2)
 
 jobs:
@@ -30,6 +30,10 @@ jobs:
         ruby: ["3.2", "3.4"]
         operating-system: [ubuntu-latest]
         fail_on_low_coverage: [true]
+        include:
+          - # Only test with minimal Ruby version on Windows
+            ruby: 3.2
+            operating-system: windows-latest
 
     steps:
       - name: Checkout

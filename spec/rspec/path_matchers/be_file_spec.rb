@@ -572,6 +572,12 @@ RSpec.describe 'the be_file matcher' do
   end
 
   describe 'the mode: option' do
+    before(:all) do
+      # :nocov: this line is platform-specific
+      skip 'File mode tests are only applicable on Unix-like platforms' unless UNIX_LIKE_PLATFORM
+      # :nocov:
+    end
+
     subject { expect(path).to be_file(mode: expected_mode) }
 
     before { FileUtils.touch(path) }
