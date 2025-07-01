@@ -19,6 +19,20 @@
 * Update README to give an example toward the top of the doc ([ece4afc](https://github.com/main-branch/rspec-path_matchers/commit/ece4afc3edb1e27e96fa3fe70052c99a73f6a221))
 * Update README to give an example toward the top of the doc ([5b0f196](https://github.com/main-branch/rspec-path_matchers/commit/5b0f19646fe6cd7b7cba6c057e690b7b54d5c3c3))
 
+## [0.2.1](https://github.com/main-branch/rspec-path_matchers/compare/v0.2.0...v0.2.1) (2025-07-01)
+
+
+### Bug Fixes
+
+* Make error messages consistent ([3a5f730](https://github.com/main-branch/rspec-path_matchers/commit/3a5f7301e29601cda438d4b0163909bd9e22cd4b))
+* Update CI badge to point to the correct workflow ([589a588](https://github.com/main-branch/rspec-path_matchers/commit/589a5882e568292b4d6c40e5e37875cc7d9b1ca1))
+
+
+### Other Changes
+
+* Add doc link badge to README ([7de600b](https://github.com/main-branch/rspec-path_matchers/commit/7de600b5ed554a30f2439863a1d10c4ca078f1ea))
+* Update README to include CHANGELOG badge ([0a871ca](https://github.com/main-branch/rspec-path_matchers/commit/0a871caa763db16e47d2b45273ab4acfca42cb90))
+
 ## [0.1.1](https://github.com/main-branch/rspec-path_matchers/compare/v0.1.0...v0.1.1) (2025-06-25)
 
 
