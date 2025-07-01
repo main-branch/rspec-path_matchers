@@ -22,13 +22,15 @@ RSpec.describe 'failure messages' do
       app_path = File.join(base_dir, 'app')
       Dir.mkdir(app_path)
       FileUtils.chmod(0o700, app_path)
+      # Mock the mtime to eliminate the potential for a different timezone output in the failure message
+      mock_file_stat(app_path, mtime: mocked_now - 200)
 
-      matcher = be_dir(mode: '0755')
+      matcher = be_dir(mtime: be_within(50).of(mocked_now))
       matcher.matches?(app_path)
 
       expected_message = <<~MSG.chomp
         #{app_path} was not as expected:
-              expected mode to be "0755", but it was "0700"
+              expected mtime to be within 50 of 1967-03-15 00:16:00.000000000 -0700, but it was 1967-03-15 00:12:40 -0700
       MSG
       expect(matcher.failure_message).to eq(expected_message)
     end
@@ -60,20 +62,19 @@ RSpec.describe 'failure messages' do
       setup_path = File.join(bin_path, 'setup')
       Dir.mkdir(bin_path)
       File.write(setup_path, '#!/bin/sh')
-      FileUtils.chmod(0o755, setup_path)
-      mock_file_stat(setup_path, uid: 9999, mode: 0o100755)
-      mock_user_name(9999, 'testuser')
+      # Mock the mtime to eliminate the potential for a different timezone output in the failure message
+      mock_file_stat(setup_path, mtime: mocked_now - 1, size: 9)
 
       matcher = be_dir.containing(
-        file('setup', mode: '0644', owner: 'root')
+        file('setup', mtime: mocked_now, size: be_zero)
       )
       matcher.matches?(bin_path)
 
       expected_message = <<~MSG.chomp
         #{bin_path} was not as expected:
           - setup
-              expected mode to be "0644", but it was "0755"
-              expected owner to be "root", but it was "testuser"
+              expected mtime to be 1967-03-15 00:16:00 -0700, but it was 1967-03-15 00:15:59 -0700
+              expected size to be zero, but it was 9
       MSG
       expect(matcher.failure_message).to eq(expected_message)
     end
@@ -92,14 +93,11 @@ RSpec.describe 'failure messages' do
       FileUtils.mkdir_p(lib_dir)
       File.write(setup_path, '#!/bin/sh')
       File.write(version_path, version_rb_content)
-      FileUtils.chmod(0o755, setup_path)
-
-      mock_file_stat(setup_path, uid: 9999, mode: 0o100755)
-      mock_user_name(9999, 'owner')
+      mock_file_stat(setup_path, mtime: mocked_now - 11, size: 9)
 
       matcher = be_dir.containing(
         dir('bin').containing(
-          file('setup', mode: '0644', owner: 'root')
+          file('setup', mtime: be_within(10).of(mocked_now), size: be_zero)
         ),
         dir('lib').containing(
           dir('new_project').containing(
@@ -112,8 +110,8 @@ RSpec.describe 'failure messages' do
       expected_message = <<~MSG.chomp
         #{base_dir} was not as expected:
           - bin/setup
-              expected mode to be "0644", but it was "0755"
-              expected owner to be "root", but it was "owner"
+              expected mtime to be within 10 of 1967-03-15 00:16:00.000000000 -0700, but it was 1967-03-15 00:15:49 -0700
+              expected size to be zero, but it was 9
           - lib/new_project/version.rb
               expected content to include "VERSION = \\"0.1.1\\"", but it was #{version_rb_content.inspect}
       MSG

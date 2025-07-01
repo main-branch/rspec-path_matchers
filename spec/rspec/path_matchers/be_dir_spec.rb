@@ -215,6 +215,12 @@ RSpec.describe 'the be_dir matcher' do
   end
 
   describe 'the mode: option' do
+    before(:all) do
+      # :nocov: this line is platform-specific
+      skip 'File mode tests are only applicable on Unix-like platforms' unless UNIX_LIKE_PLATFORM
+      # :nocov:
+    end
+
     subject { expect(path).to be_dir(mode: expected_mode) }
 
     before { FileUtils.mkdir(path) }
