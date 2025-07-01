@@ -19,6 +19,18 @@
 * Update README to give an example toward the top of the doc ([ece4afc](https://github.com/main-branch/rspec-path_matchers/commit/ece4afc3edb1e27e96fa3fe70052c99a73f6a221))
 * Update README to give an example toward the top of the doc ([5b0f196](https://github.com/main-branch/rspec-path_matchers/commit/5b0f19646fe6cd7b7cba6c057e690b7b54d5c3c3))
 
+## [0.2.2](https://github.com/main-branch/rspec-path_matchers/compare/v0.2.1...v0.2.2) (2025-07-01)
+
+
+### Features
+
+* Ensure windows compatibility for Ruby MRI ([c712b23](https://github.com/main-branch/rspec-path_matchers/commit/c712b23e5e0eac7484278f8dd40866cfc739870d))
+
+
+### Other Changes
+
+* Add a statement about the precise, easy-to-diagnose failure messages in the README summary ([90e183e](https://github.com/main-branch/rspec-path_matchers/commit/90e183e1e828949db9a89428f5d207303814f92e))
+
 ## [0.2.1](https://github.com/main-branch/rspec-path_matchers/compare/v0.2.0...v0.2.1) (2025-07-01)
 
 
