@@ -2,6 +2,7 @@
 
 [![Gem
 Version](https://img.shields.io/gem/v/rspec-path_matchers.svg)](https://rubygems.org/gems/rspec-path_matchers)
+[![Documentation](https://img.shields.io/badge/Documentation-Latest-green)](https://rubydoc.info/gems/rspec-path_matchers/)
 [![Continuous Integration](https://github.com/main-branch/rspec-path_matchers/actions/workflows/continuous_integration.yml/badge.svg)](https://github.com/main-branch/rspec-path_matchers/actions/workflows/continuous_integration.yml)
 [![MIT
 License](https://img.shields.io/badge/license-MIT-green)](https://opensource.org/licenses/MIT)
