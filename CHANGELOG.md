@@ -1,5 +1,3 @@
-## [Unreleased]
-
 ## [0.2.0](https://github.com/main-branch/rspec-path_matchers/compare/v0.1.1...v0.2.0) (2025-06-30)
 
 
