@@ -186,7 +186,9 @@ RSpec.describe 'the be_file matcher' do
       let(:options) { { invalid_option: true } }
       it 'should raise an ArgumentError' do
         expected_message = /unknown keyword: :invalid_option/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -194,7 +196,9 @@ RSpec.describe 'the be_file matcher' do
       let(:options) { { invalid_option: true, another_invalid: false } }
       it 'should raise an ArgumentError listing all invalid options' do
         expected_message = /unknown keywords: :invalid_option, :another_invalid/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
   end
@@ -214,8 +218,10 @@ RSpec.describe 'the be_file matcher' do
       let(:expected_content) { 123 }
 
       it 'should raise an ArgumentError' do
-        expected_message = /expected `content:` to be a Matcher, String, or Regexp, but was 123/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `content:` to be a Matcher, String, or Regexp, but it was 123/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -235,8 +241,21 @@ RSpec.describe 'the be_file matcher' do
           let(:actual_content) { 'Goodbye, World!' }
 
           it 'should fail' do
-            expected_message = /expected content to be "#{expected_content}"/
-            expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+            expected_message = /expected content to be "#{expected_content}", but it was "Goodbye, World!"/
+            expect { subject }.to raise_error(expectation_not_met_error) do |error|
+              expect(error.message).to match(expected_message)
+            end
+          end
+
+          context 'when the actual content is long' do
+            let(:actual_content) { 'a' * 1000 }
+
+            it 'should not include the actual content in the error message' do
+              expected_message = /expected content to be "Hello, World!", but it was not/
+              expect { subject }.to raise_error(expectation_not_met_error) do |error|
+                expect(error.message).to match(expected_message)
+              end
+            end
           end
         end
       end
@@ -257,7 +276,20 @@ RSpec.describe 'the be_file matcher' do
 
           it 'should fail' do
             expected_message = %r{expected content to match /Hello/}
-            expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+            expect { subject }.to raise_error(expectation_not_met_error) do |error|
+              expect(error.message).to match(expected_message)
+            end
+          end
+
+          context 'when the actual content is long' do
+            let(:actual_content) { 'a' * 1000 }
+
+            it 'should not include the actual content in the error message' do
+              expected_message = %r{expected content to match /Hello/, but it did not}
+              expect { subject }.to raise_error(expectation_not_met_error) do |error|
+                expect(error.message).to match(expected_message)
+              end
+            end
           end
         end
       end
@@ -277,8 +309,21 @@ RSpec.describe 'the be_file matcher' do
           let(:actual_content) { 'Goodbye, World!' }
 
           it 'should fail' do
-            expected_message = /expected content to include "Hello"/
-            expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+            expected_message = /expected content to include "Hello", but it was "Goodbye, World!"/
+            expect { subject }.to raise_error(expectation_not_met_error) do |error|
+              expect(error.message).to match(expected_message)
+            end
+          end
+
+          context 'when the actual content is long' do
+            let(:actual_content) { 'a' * 1000 }
+
+            it 'should not include the actual content in the error message' do
+              expected_message = /expected content to include "Hello", but it did not/
+              expect { subject }.to raise_error(expectation_not_met_error) do |error|
+                expect(error.message).to match(expected_message)
+              end
+            end
           end
         end
       end
@@ -299,8 +344,10 @@ RSpec.describe 'the be_file matcher' do
     context 'when the expected content is not valid' do
       let(:expected_content) { 123 }
       it 'should raise an ArgumentError' do
-        expected_message = /expected `json_content:` to be a Matcher or TrueClass, but was 123/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `json_content:` to be a Matcher or TrueClass, but it was 123/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -320,7 +367,9 @@ RSpec.describe 'the be_file matcher' do
 
         it 'should fail' do
           expected_message = /expected valid JSON content, but got error/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -341,7 +390,24 @@ RSpec.describe 'the be_file matcher' do
 
         it 'should fail' do
           expected_message = /expected JSON content to include /
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
+        end
+
+        context 'when the actual content is long' do
+          let(:actual_content) { %({"key": "#{'a' * 1000}"}) }
+
+          it 'should not include the actual content in the error message' do
+            expected_message = <<~MESSAGE.chomp
+              #{path} was not as expected:
+                    expected JSON content to include {"key" => "value"}, but it did not
+            MESSAGE
+
+            expect { subject }.to raise_error(expectation_not_met_error) do |error|
+              expect(error.message).to eq(expected_message)
+            end
+          end
         end
       end
     end
@@ -361,8 +427,10 @@ RSpec.describe 'the be_file matcher' do
     context 'when the expected content is not valid' do
       let(:expected_content) { 123 }
       it 'should raise an ArgumentError' do
-        expected_message = /expected `yaml_content:` to be a Matcher or TrueClass, but was 123/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `yaml_content:` to be a Matcher or TrueClass, but it was 123/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -382,7 +450,9 @@ RSpec.describe 'the be_file matcher' do
 
         it 'should fail' do
           expected_message = /expected valid YAML content, but got error/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -395,7 +465,9 @@ RSpec.describe 'the be_file matcher' do
 
         it 'should fail' do
           expected_message = /expected valid YAML content, but got error/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
 
@@ -418,7 +490,24 @@ RSpec.describe 'the be_file matcher' do
 
         it 'should fail' do
           expected_message = /expected YAML content to include/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
+        end
+
+        context 'when the actual content is long' do
+          let(:actual_content) { %(key: "#{'a' * 1000}") }
+
+          it 'should not include the actual content in the error message' do
+            expected_message = <<~MESSAGE.chomp
+              #{path} was not as expected:
+                    expected YAML content to include {"key" => "value"}, but it did not
+            MESSAGE
+
+            expect { subject }.to raise_error(expectation_not_met_error) do |error|
+              expect(error.message).to eq(expected_message)
+            end
+          end
         end
       end
     end
@@ -432,8 +521,10 @@ RSpec.describe 'the be_file matcher' do
     context 'when given an invalid size value' do
       let(:expected_size) { 'invalid' }
       it 'should raise an ArgumentError' do
-        expected_message = /expected `size:` to be a Matcher or Integer, but was "invalid"/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `size:` to be a Matcher or Integer, but it was "invalid"/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -450,8 +541,10 @@ RSpec.describe 'the be_file matcher' do
       context 'when the expected size does not match the actual size' do
         it 'should fail' do
           File.write(path, 'Short')
-          expected_message = /expected size to be 13, but was 5/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected size to be 13, but it was 5/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -469,8 +562,10 @@ RSpec.describe 'the be_file matcher' do
       context 'when the expected size does not match the actual size' do
         it 'should fail' do
           File.write(path, 'Short')
-          expected_message = /expected size to be > 10, but was 5/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected size to be > 10, but it was 5/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -484,8 +579,10 @@ RSpec.describe 'the be_file matcher' do
     context 'when the expected value is not valid' do
       let(:expected_mode) { 123 }
       it 'should raise an ArgumentError' do
-        expected_message = /expected `mode:` to be a Matcher or String, but was 123/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `mode:` to be a Matcher or String, but it was 123/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -504,8 +601,10 @@ RSpec.describe 'the be_file matcher' do
         let(:actual_mode) { '0755' }
         it 'should fail' do
           FileUtils.chmod(actual_mode.to_i(8), path)
-          expected_message = /expected mode to be "0644", but was "0755"/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected mode to be "0644", but it was "0755"/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -526,8 +625,10 @@ RSpec.describe 'the be_file matcher' do
         let(:actual_mode) { '0600' }
         it 'should fail' do
           FileUtils.chmod(actual_mode.to_i(8), path)
-          expected_message = Regexp.escape('expected mode to match /^07..$/, but was "0600"')
-          expect { subject }.to raise_error(expectation_not_met_error, /#{expected_message}/)
+          expected_message = Regexp.escape('expected mode to match /^07..$/, but it was "0600"')
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -542,8 +643,10 @@ RSpec.describe 'the be_file matcher' do
       let(:expected_owner) { 123 }
 
       it 'should raise an ArgumentError' do
-        expected_message = /expected `owner:` to be a Matcher or String, but was 123/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `owner:` to be a Matcher or String, but it was 123/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -581,8 +684,10 @@ RSpec.describe 'the be_file matcher' do
         it 'should fail' do
           mock_file_stat(path, uid: 9999)
           mock_user_name(9999, actual_owner)
-          expected_message = /expected owner to be "testuser", but was "otheruser"/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected owner to be "testuser", but it was "otheruser"/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -606,8 +711,10 @@ RSpec.describe 'the be_file matcher' do
         it 'should fail' do
           mock_file_stat(path, uid: 9999)
           mock_user_name(9999, actual_owner)
-          expected_message = /expected owner to eq "testuser", but was "otheruser"/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected owner to eq "testuser", but it was "otheruser"/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -621,8 +728,10 @@ RSpec.describe 'the be_file matcher' do
     context 'when given an invalid group value' do
       let(:expected_group) { 123 }
       it 'should raise an ArgumentError' do
-        expected_message = /expected `group:` to be a Matcher or String, but was 123/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `group:` to be a Matcher or String, but it was 123/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -660,8 +769,10 @@ RSpec.describe 'the be_file matcher' do
         it 'should fail' do
           mock_file_stat(path, gid: 9999)
           mock_group_name(9999, actual_group)
-          expected_message = /expected group to be "testgroup", but was "othergroup"/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected group to be "testgroup", but it was "othergroup"/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -685,8 +796,10 @@ RSpec.describe 'the be_file matcher' do
         it 'should fail' do
           mock_file_stat(path, gid: 9999)
           mock_group_name(9999, actual_group)
-          expected_message = /expected group to eq "testgroup", but was "othergroup"/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected group to eq "testgroup", but it was "othergroup"/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -701,8 +814,10 @@ RSpec.describe 'the be_file matcher' do
       let(:expected_atime) { 'invalid' }
 
       it 'should raise an ArgumentError' do
-        expected_message = /expected `atime:` to be a Matcher, Time, or DateTime, but was "invalid"/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `atime:` to be a Matcher, Time, or DateTime, but it was "invalid"/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -723,8 +838,10 @@ RSpec.describe 'the be_file matcher' do
 
         it 'should fail' do
           mock_file_stat(path, atime: actual_atime)
-          expected_message = /expected atime to be #{expected_atime.inspect}, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected atime to be #{expected_atime.inspect}, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -746,8 +863,10 @@ RSpec.describe 'the be_file matcher' do
 
         it 'should fail' do
           mock_file_stat(path, atime: actual_atime)
-          expected_message = /expected atime to be 1967-03-15 00:16:00 -0700, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected atime to be 1967-03-15 00:16:00 -0700, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -769,8 +888,10 @@ RSpec.describe 'the be_file matcher' do
 
         it 'should fail' do
           mock_file_stat(path, atime: actual_atime)
-          expected_message = /expected atime to be within 10 of 1967-03-15 00:16:00.000000000 -0700, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected atime to be within 10 of 1967-03-15 00:16:00.000000000 -0700, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -799,8 +920,10 @@ RSpec.describe 'the be_file matcher' do
       let(:expected_birthtime) { 'invalid' }
 
       it 'should raise an ArgumentError' do
-        expected_message = /expected `birthtime:` to be a Matcher, Time, or DateTime, but was "invalid"/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `birthtime:` to be a Matcher, Time, or DateTime, but it was "invalid"/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -821,8 +944,10 @@ RSpec.describe 'the be_file matcher' do
 
         it 'should fail' do
           mock_file_stat(path, birthtime: actual_birthtime)
-          expected_message = /expected birthtime to be #{expected_birthtime.inspect}, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected birthtime to be #{expected_birthtime.inspect}, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -844,8 +969,10 @@ RSpec.describe 'the be_file matcher' do
 
         it 'should fail' do
           mock_file_stat(path, birthtime: actual_birthtime)
-          expected_message = /expected birthtime to be 1967-03-15 00:16:00 -0700, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected birthtime to be 1967-03-15 00:16:00 -0700, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -867,8 +994,10 @@ RSpec.describe 'the be_file matcher' do
 
         it 'should fail' do
           mock_file_stat(path, birthtime: actual_birthtime)
-          expected_message = /expected birthtime to be within 10 of 1967-03-15 00:16:00.000000000 -0700, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected birthtime to be within 10 of 1967-03-15 00:16:00.000000000 -0700, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -883,8 +1012,10 @@ RSpec.describe 'the be_file matcher' do
       let(:expected_ctime) { 'invalid' }
 
       it 'should raise an ArgumentError' do
-        expected_message = /expected `ctime:` to be a Matcher, Time, or DateTime, but was "invalid"/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `ctime:` to be a Matcher, Time, or DateTime, but it was "invalid"/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -905,8 +1036,10 @@ RSpec.describe 'the be_file matcher' do
 
         it 'should fail' do
           mock_file_stat(path, ctime: actual_ctime)
-          expected_message = /expected ctime to be #{expected_ctime.inspect}, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected ctime to be #{expected_ctime.inspect}, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -928,8 +1061,10 @@ RSpec.describe 'the be_file matcher' do
 
         it 'should fail' do
           mock_file_stat(path, ctime: actual_ctime)
-          expected_message = /expected ctime to be 1967-03-15 00:16:00 -0700, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected ctime to be 1967-03-15 00:16:00 -0700, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -951,8 +1086,10 @@ RSpec.describe 'the be_file matcher' do
 
         it 'should fail' do
           mock_file_stat(path, ctime: actual_ctime)
-          expected_message = /expected ctime to be within 10 of 1967-03-15 00:16:00.000000000 -0700, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected ctime to be within 10 of 1967-03-15 00:16:00.000000000 -0700, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -967,8 +1104,10 @@ RSpec.describe 'the be_file matcher' do
       let(:expected_mtime) { 'invalid' }
 
       it 'should raise an ArgumentError' do
-        expected_message = /expected `mtime:` to be a Matcher, Time, or DateTime, but was "invalid"/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `mtime:` to be a Matcher, Time, or DateTime, but it was "invalid"/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -990,8 +1129,10 @@ RSpec.describe 'the be_file matcher' do
         it 'should fail' do
           mock_file_stat(path, mtime: actual_mtime)
 
-          expected_message = /expected mtime to be #{expected_mtime.inspect}, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected mtime to be #{expected_mtime.inspect}, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -1013,8 +1154,10 @@ RSpec.describe 'the be_file matcher' do
 
         it 'should fail' do
           mock_file_stat(path, mtime: actual_mtime)
-          entry_name = /expected mtime to be 1967-03-15 00:16:00 -0700, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, entry_name)
+          expected_message = /expected mtime to be 1967-03-15 00:16:00 -0700, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -1036,8 +1179,10 @@ RSpec.describe 'the be_file matcher' do
 
         it 'should fail' do
           mock_file_stat(path, mtime: actual_mtime)
-          expected_message = /expected mtime to be within 10 of 1967-03-15 00:16:00.000000000 -0700, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected mtime to be within 10 of 1967-03-15 00:16:00.000000000 -0700, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end

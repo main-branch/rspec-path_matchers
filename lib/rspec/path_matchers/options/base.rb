@@ -102,7 +102,7 @@ module RSpec
 
           types = ['Matcher', *valid_expected_types.map(&:name)].to_sentence(conjunction: 'or')
 
-          errors << "expected `#{key}:` to be a #{types}, but was #{expected.inspect}"
+          errors << "expected `#{key}:` to be a #{types}, but it was #{expected.inspect}"
         end
 
         protected
@@ -189,36 +189,6 @@ module RSpec
         #
         private_class_method def self.literal_match?(actual, expected) = actual == expected
 
-        # Generates a failure message for a literal match failure
-        #
-        # This is used when the actual value does not match the expected value.
-        # It provides a clear message indicating what was expected and what was
-        # actually found.
-        #
-        # Option subclasses should override this method to provide custom failure
-        # messages for specific types of options.
-        #
-        # @example generate a failure message for a literal match failure
-        #  def self.literal_failure_message(actual, expected)
-        #    if expected.is_a?(Regexp)
-        #      "expected #{key} to match #{expected.inspect}, but was #{actual.inspect}"
-        #    else
-        #      "expected #{key} to be #{expected.inspect}, but was #{actual.inspect}"
-        #    end
-        #  end
-        #
-        # @param actual [Object] the actual value fetched from the file system
-        #
-        # @param expected [Object] the expected literal value to match against
-        #
-        # @return [String] the failure message
-        #
-        # @api protected
-        #
-        private_class_method def self.literal_failure_message(actual, expected)
-          "expected #{key} to be #{expected.inspect}, but was #{actual.inspect}"
-        end
-
         # Add to `failures` if actual value matches the normalized expected value
         #
         # This is called when expected is not an RSpec matcher.
@@ -242,12 +212,41 @@ module RSpec
 
           return if literal_match?(actual, expected)
 
-          message = literal_failure_message(actual, expected)
-          add_failure(message, failures)
+          add_failure(literal_failure_message(actual, expected), failures)
         end
 
         private_class_method def self.add_failure(message, failures)
           failures << RSpec::PathMatchers::Failure.new('.', message)
+        end
+
+        # Generates a failure message for a literal match failure
+        #
+        # This is used when the actual value does not match the expected value.
+        # It provides a clear message indicating what was expected and what was
+        # actually found.
+        #
+        # Option subclasses should override this method to provide custom failure
+        # messages for specific types of options.
+        #
+        # @example generate a failure message for a literal match failure
+        #  def self.literal_failure_message(actual, expected)
+        #    if expected.is_a?(Regexp)
+        #      "expected #{key} to match #{expected.inspect}, but it was #{actual.inspect}"
+        #    else
+        #      "expected #{key} to be #{expected.inspect}, but it was #{actual.inspect}"
+        #    end
+        #  end
+        #
+        # @param actual [Object] the actual value fetched from the file system
+        #
+        # @param expected [Object] the expected literal value to match against
+        #
+        # @return [String] the failure message
+        #
+        # @api protected
+        #
+        private_class_method def self.literal_failure_message(actual, expected)
+          "expected #{key} to be #{expected.inspect}, but it was #{actual.inspect}"
         end
 
         # Add to `failures` if actual value matches the normalized expected value
@@ -271,8 +270,28 @@ module RSpec
         private_class_method def self.match_matcher(actual, expected, failures)
           return if expected.matches?(actual)
 
-          message = "expected #{key} to #{expected.description}, but was #{actual.inspect}"
-          add_failure(message, failures)
+          add_failure(matcher_failure_message(actual, expected), failures)
+        end
+
+        # Generates a failure message for a matcher match failure
+        #
+        # This is used when the actual value does not match the expected value.
+        # It provides a clear message indicating what was expected and what was
+        # actually found.
+        #
+        # Option subclasses should override this method to provide custom failure
+        # messages for specific types of options.
+        #
+        # @param actual [Object] the actual value fetched from the file system
+        #
+        # @param expected [Object] the expected literal value to match against
+        #
+        # @return [String] the failure message
+        #
+        # @api protected
+        #
+        private_class_method def self.matcher_failure_message(actual, expected)
+          "expected #{key} to #{expected.description}, but it was #{actual.inspect}"
         end
 
         # Warning message for unsupported expectations

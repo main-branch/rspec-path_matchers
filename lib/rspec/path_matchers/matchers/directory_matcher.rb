@@ -164,7 +164,7 @@ module RSpec
         end
 
         def build_unexpected_entries_message(unexpected_entries)
-          "contained unexpected entries #{unexpected_entries.sort.inspect}"
+          "expected no other entries, but found #{unexpected_entries.sort.inspect}"
         end
       end
     end

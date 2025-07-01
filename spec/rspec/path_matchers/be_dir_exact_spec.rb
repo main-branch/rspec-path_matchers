@@ -119,7 +119,7 @@ RSpec.describe 'the be_dir matcher' do
             expected_message = <<~MESSAGE.chomp
               #{tmpdir} was not as expected:
                 - #{entry_name}
-                    contained unexpected entries ["file1.txt"]
+                    expected no other entries, but found ["file1.txt"]
             MESSAGE
 
             expect { subject }.to raise_error(expectation_not_met_error) do |error|
@@ -195,7 +195,9 @@ RSpec.describe 'the be_dir matcher' do
           it 'should fail with the `no_file` failure message' do
             # This ensures the `no_file` check runs and its failure message is prioritized.
             expected_message = /expected file 'file2.txt' not to be found at '.*', but it exists/
-            expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+            expect { subject }.to raise_error(expectation_not_met_error) do |error|
+              expect(error.message).to match(expected_message)
+            end
           end
         end
 
@@ -266,7 +268,7 @@ RSpec.describe 'the be_dir matcher' do
             expected_message = <<~MESSAGE.chomp
               #{tmpdir} was not as expected:
                 - dir/nested_dir
-                    contained unexpected entries ["unexpected_file1.txt", "unexpected_file2.txt"]
+                    expected no other entries, but found ["unexpected_file1.txt", "unexpected_file2.txt"]
             MESSAGE
             expect { subject }.to raise_error(expectation_not_met_error) do |error|
               expect(error.message).to eq(expected_message)

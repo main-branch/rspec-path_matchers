@@ -197,7 +197,9 @@ RSpec.describe 'the be_dir matcher' do
       let(:options) { { invalid_option: true } }
       it 'should raise an ArgumentError' do
         expected_message = /unknown keyword: :invalid_option/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -205,7 +207,9 @@ RSpec.describe 'the be_dir matcher' do
       let(:options) { { invalid_option: true, another_invalid: false } }
       it 'should raise an ArgumentError listing all invalid options' do
         expected_message = /unknown keywords: :invalid_option, :another_invalid/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
   end
@@ -218,8 +222,10 @@ RSpec.describe 'the be_dir matcher' do
     context 'when the expected value is not valid' do
       let(:expected_mode) { 123 }
       it 'should raise an ArgumentError' do
-        expected_message = /expected `mode:` to be a Matcher or String, but was 123/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `mode:` to be a Matcher or String, but it was 123/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -238,8 +244,10 @@ RSpec.describe 'the be_dir matcher' do
         let(:actual_mode) { '0755' }
         it 'should fail' do
           FileUtils.chmod(actual_mode.to_i(8), path)
-          expected_message = /expected mode to be "0644", but was "0755"/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected mode to be "0644", but it was "0755"/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -262,8 +270,10 @@ RSpec.describe 'the be_dir matcher' do
         it 'should fail' do
           FileUtils.touch(path)
           FileUtils.chmod(actual_mode.to_i(8), path)
-          expected_message = Regexp.escape('expected mode to match /^07..$/, but was "0600"')
-          expect { subject }.to raise_error(expectation_not_met_error, /#{expected_message}/)
+          expected_message = Regexp.escape('expected mode to match /^07..$/, but it was "0600"')
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -278,8 +288,10 @@ RSpec.describe 'the be_dir matcher' do
       let(:expected_owner) { 123 }
 
       it 'should raise an ArgumentError' do
-        expected_message = /expected `owner:` to be a Matcher or String, but was 123/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `owner:` to be a Matcher or String, but it was 123/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -321,8 +333,10 @@ RSpec.describe 'the be_dir matcher' do
           FileUtils.touch(path)
           mock_file_stat(path, uid: 9999)
           mock_user_name(9999, actual_owner)
-          expected_message = /expected owner to be "testuser", but was "otheruser"/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected owner to be "testuser", but it was "otheruser"/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -348,8 +362,10 @@ RSpec.describe 'the be_dir matcher' do
           FileUtils.touch(path)
           mock_file_stat(path, uid: 9999)
           mock_user_name(9999, actual_owner)
-          expected_message = /expected owner to eq "testuser", but was "otheruser"/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected owner to eq "testuser", but it was "otheruser"/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -363,8 +379,10 @@ RSpec.describe 'the be_dir matcher' do
     context 'when given an invalid group value' do
       let(:expected_group) { 123 }
       it 'should raise an ArgumentError' do
-        expected_message = /expected `group:` to be a Matcher or String, but was 123/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `group:` to be a Matcher or String, but it was 123/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -406,8 +424,10 @@ RSpec.describe 'the be_dir matcher' do
           FileUtils.touch(path)
           mock_file_stat(path, gid: 9999)
           mock_group_name(9999, actual_group)
-          expected_message = /expected group to be "testgroup", but was "othergroup"/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected group to be "testgroup", but it was "othergroup"/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -433,8 +453,10 @@ RSpec.describe 'the be_dir matcher' do
           FileUtils.touch(path)
           mock_file_stat(path, gid: 9999)
           mock_group_name(9999, actual_group)
-          expected_message = /expected group to eq "testgroup", but was "othergroup"/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected group to eq "testgroup", but it was "othergroup"/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -450,8 +472,10 @@ RSpec.describe 'the be_dir matcher' do
 
       it 'should raise an ArgumentError' do
         FileUtils.touch(path)
-        expected_message = /expected `atime:` to be a Matcher, Time, or DateTime, but was "invalid"/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `atime:` to be a Matcher, Time, or DateTime, but it was "invalid"/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -474,8 +498,10 @@ RSpec.describe 'the be_dir matcher' do
         it 'should fail' do
           FileUtils.touch(path)
           mock_file_stat(path, atime: actual_atime)
-          expected_message = /expected atime to be #{expected_atime.inspect}, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected atime to be #{expected_atime.inspect}, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -499,8 +525,10 @@ RSpec.describe 'the be_dir matcher' do
         it 'should fail' do
           FileUtils.touch(path)
           mock_file_stat(path, atime: actual_atime)
-          expected_message = /expected atime to be 1967-03-15 00:16:00 -0700, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected atime to be 1967-03-15 00:16:00 -0700, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -524,8 +552,10 @@ RSpec.describe 'the be_dir matcher' do
         it 'should fail' do
           FileUtils.touch(path)
           mock_file_stat(path, atime: actual_atime)
-          expected_message = /expected atime to be within 10 of 1967-03-15 00:16:00.000000000 -0700, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected atime to be within 10 of 1967-03-15 00:16:00.000000000 -0700, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -555,8 +585,10 @@ RSpec.describe 'the be_dir matcher' do
 
       it 'should raise an ArgumentError' do
         FileUtils.touch(path)
-        expected_message = /expected `birthtime:` to be a Matcher, Time, or DateTime, but was "invalid"/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `birthtime:` to be a Matcher, Time, or DateTime, but it was "invalid"/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -579,8 +611,10 @@ RSpec.describe 'the be_dir matcher' do
         it 'should fail' do
           FileUtils.touch(path)
           mock_file_stat(path, birthtime: actual_birthtime)
-          expected_message = /expected birthtime to be #{expected_birthtime.inspect}, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected birthtime to be #{expected_birthtime.inspect}, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -604,8 +638,10 @@ RSpec.describe 'the be_dir matcher' do
         it 'should fail' do
           FileUtils.touch(path)
           mock_file_stat(path, birthtime: actual_birthtime)
-          expected_messsage = /expected birthtime to be 1967-03-15 00:16:00 -0700, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_messsage)
+          expected_message = /expected birthtime to be 1967-03-15 00:16:00 -0700, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -629,8 +665,10 @@ RSpec.describe 'the be_dir matcher' do
         it 'should fail' do
           FileUtils.touch(path)
           mock_file_stat(path, birthtime: actual_birthtime)
-          expected_message = /expected birthtime to be within 10 of 1967-03-15 00:16:00.000000000 -0700, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected birthtime to be within 10 of 1967-03-15 00:16:00.000000000 -0700, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -646,8 +684,10 @@ RSpec.describe 'the be_dir matcher' do
 
       it 'should raise an ArgumentError' do
         FileUtils.touch(path)
-        expected_message = /expected `ctime:` to be a Matcher, Time, or DateTime, but was "invalid"/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `ctime:` to be a Matcher, Time, or DateTime, but it was "invalid"/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -670,8 +710,10 @@ RSpec.describe 'the be_dir matcher' do
         it 'should fail' do
           FileUtils.touch(path)
           mock_file_stat(path, ctime: actual_ctime)
-          expected_message = /expected ctime to be #{expected_ctime.inspect}, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected ctime to be #{expected_ctime.inspect}, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -695,8 +737,10 @@ RSpec.describe 'the be_dir matcher' do
         it 'should fail' do
           FileUtils.touch(path)
           mock_file_stat(path, ctime: actual_ctime)
-          expected_message = /expected ctime to be 1967-03-15 00:16:00 -0700, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected ctime to be 1967-03-15 00:16:00 -0700, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -720,8 +764,10 @@ RSpec.describe 'the be_dir matcher' do
         it 'should fail' do
           FileUtils.touch(path)
           mock_file_stat(path, ctime: actual_ctime)
-          expected_message = /expected ctime to be within 10 of 1967-03-15 00:16:00.000000000 -0700, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected ctime to be within 10 of 1967-03-15 00:16:00.000000000 -0700, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -737,8 +783,10 @@ RSpec.describe 'the be_dir matcher' do
 
       it 'should raise an ArgumentError' do
         FileUtils.touch(path)
-        expected_message = /expected `mtime:` to be a Matcher, Time, or DateTime, but was "invalid"/
-        expect { subject }.to raise_error(ArgumentError, expected_message)
+        expected_message = /expected `mtime:` to be a Matcher, Time, or DateTime, but it was "invalid"/
+        expect { subject }.to raise_error(ArgumentError) do |error|
+          expect(error.message).to match(expected_message)
+        end
       end
     end
 
@@ -762,8 +810,10 @@ RSpec.describe 'the be_dir matcher' do
           FileUtils.touch(path)
           mock_file_stat(path, mtime: actual_mtime)
 
-          expected_message = /expected mtime to be #{expected_mtime.inspect}, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected mtime to be #{expected_mtime.inspect}, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -787,8 +837,10 @@ RSpec.describe 'the be_dir matcher' do
         it 'should fail' do
           FileUtils.touch(path)
           mock_file_stat(path, mtime: actual_mtime)
-          expected_message = /expected mtime to be 1967-03-15 00:16:00 -0700, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected mtime to be 1967-03-15 00:16:00 -0700, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -812,8 +864,10 @@ RSpec.describe 'the be_dir matcher' do
         it 'should fail' do
           FileUtils.touch(path)
           mock_file_stat(path, mtime: actual_mtime)
-          expected_message = /expected mtime to be within 10 of 1967-03-15 00:16:00.000000000 -0700, but was/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expected_message = /expected mtime to be within 10 of 1967-03-15 00:16:00.000000000 -0700, but it was/
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -856,7 +910,9 @@ RSpec.describe 'the be_dir matcher' do
 
         it 'should fail' do
           expected_message = /expected valid JSON content, but got error: /
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -880,7 +936,9 @@ RSpec.describe 'the be_dir matcher' do
       context 'when the expectation is not met' do
         it 'should fail' do
           expected_message = /expected it to exist/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -903,7 +961,9 @@ RSpec.describe 'the be_dir matcher' do
       context 'when the expectation is not met' do
         it 'should fail' do
           expected_message = /expected it to exist/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -936,7 +996,9 @@ RSpec.describe 'the be_dir matcher' do
 
         it 'should fail' do
           expected_message = /expected it to exist/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -973,7 +1035,9 @@ RSpec.describe 'the be_dir matcher' do
 
         it 'should fail' do
           expected_message = /expected content to be "content"/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -1010,7 +1074,9 @@ RSpec.describe 'the be_dir matcher' do
 
         it 'should fail' do
           expected_message = /expected file 'entry\.txt' not to be found at '.*', but it exists/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -1043,7 +1109,9 @@ RSpec.describe 'the be_dir matcher' do
 
         it 'should fail' do
           expected_message = /expected directory 'subdir' not to be found at '.*', but it exists/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -1076,7 +1144,9 @@ RSpec.describe 'the be_dir matcher' do
 
         it 'should fail' do
           expected_message = /expected symlink 'a_link' not to be found at '.*', but it exists/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end
@@ -1100,7 +1170,9 @@ RSpec.describe 'the be_dir matcher' do
         # 'good_file.txt' is not created
         it 'should fail' do
           expected_message = /expected it to exist/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
 
@@ -1112,7 +1184,9 @@ RSpec.describe 'the be_dir matcher' do
 
         it 'should fail' do
           expected_message = /expected file 'bad_file\.txt' not to be found at '.*', but it exists/
-          expect { subject }.to raise_error(expectation_not_met_error, expected_message)
+          expect { subject }.to raise_error(expectation_not_met_error) do |error|
+            expect(error.message).to match(expected_message)
+          end
         end
       end
     end

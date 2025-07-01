@@ -287,8 +287,8 @@ expect('config').to(
 ```text
 'config' was not as expected:
   - database.xml
-      expected owner to be "db_user", but was "root"
-      expected mode to be "0600", but was "0644"
+      expected owner to be "db_user", but it was "root"
+      expected mode to be "0600", but it was "0644"
 ```
 
 ## Development
