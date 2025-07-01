@@ -24,13 +24,15 @@ License](https://img.shields.io/badge/license-MIT-green)](https://opensource.org
 
 ## Summary
 
-**RSpec::PathMatchers** provides a comprehensive suite of RSpec matchers for
-testing directory structures.
+**RSpec::PathMatchers** provides a comprehensive suite of RSpec matchers for testing
+directory structures.
 
 Verifying that a generator, build script, or any file-manipulating process has
-produced the correct output can be tedious and verbose. This gem makes those
-assertions simple, declarative, and easier to read, allowing you to describe an entire
-file tree and its properties within your specs.
+produced the correct output can be tedious and verbose.
+
+This gem makes it easy to express expectations on an entire directory tree and
+receive precise, easy-to-diagnose failure messages when that tree does not meet its
+expectations.
 
 ## Installation
 
