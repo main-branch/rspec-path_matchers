@@ -19,6 +19,14 @@
 * Update README to give an example toward the top of the doc ([ece4afc](https://github.com/main-branch/rspec-path_matchers/commit/ece4afc3edb1e27e96fa3fe70052c99a73f6a221))
 * Update README to give an example toward the top of the doc ([5b0f196](https://github.com/main-branch/rspec-path_matchers/commit/5b0f19646fe6cd7b7cba6c057e690b7b54d5c3c3))
 
+## [0.2.3](https://github.com/main-branch/rspec-path_matchers/compare/v0.2.2...v0.2.3) (2026-04-24)
+
+
+### Other Changes
+
+* **dependencies:** Update dependencies for all GitHub Actions workflows ([8aacbb9](https://github.com/main-branch/rspec-path_matchers/commit/8aacbb9f284e3a3c86bd16783d1a3373e1277b92))
+* **rubocop:** Fix rubocop offenses from new cops ([1feb7e4](https://github.com/main-branch/rspec-path_matchers/commit/1feb7e43aff62caafb321b2e821b13265a65fac9))
+
 ## [0.2.2](https://github.com/main-branch/rspec-path_matchers/compare/v0.2.1...v0.2.2) (2025-07-01)
 
 
