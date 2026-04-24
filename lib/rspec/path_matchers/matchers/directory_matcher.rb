@@ -150,9 +150,7 @@ module RSpec
 
         # Checks for any files/directories on disk that were not declared in the block.
         def check_for_unexpected_entries
-          positively_declared_entries = nested_matchers.reject do |m|
-            m.is_a?(RSpec::PathMatchers::Matchers::NoEntryMatcher)
-          end.map(&:entry_name)
+          positively_declared_entries = nested_matchers.grep_v(RSpec::PathMatchers::Matchers::NoEntryMatcher).map(&:entry_name)
 
           actual_entries = Dir.children(path)
           unexpected_entries = actual_entries - positively_declared_entries
